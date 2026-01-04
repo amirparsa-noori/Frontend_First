@@ -13,17 +13,18 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, cartCount, currentUser, onLoginClick }) => {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-slate-900/80 border-b border-slate-800 landscape:h-14 md:landscape:h-20 flex items-center">
+    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-slate-900/80 border-b border-slate-800 landscape:h-20 md:landscape:h-20 flex items-center">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="flex items-center justify-between h-14 md:h-20">
+        {/* Mobile height increased from h-14 to h-20 for better touch compatibility */}
+        <div className="flex items-center justify-between h-20 md:h-20">
           
-          {/* Right side: Logo */}
+          {/* Right side: Logo - Mobile size increased */}
           <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab('home')}>
-             <div className="bg-white/95 px-3 md:px-4 py-1 md:py-1.5 rounded-lg md:rounded-xl shadow-lg transition-all duration-300 group-hover:scale-105 border border-white/20">
+             <div className="bg-white/95 px-4 md:px-4 py-2 md:py-1.5 rounded-xl md:rounded-xl shadow-lg transition-all duration-300 group-hover:scale-105 border border-white/20">
                  <img 
                    src="https://drshamimnasab.ir/wp-content/uploads/2023/06/logoshamimnasab2-2048x725.png" 
                    alt="داروخانه دکتر شمیم نسب" 
-                   className="h-6 md:h-9 w-auto object-contain"
+                   className="h-10 md:h-9 w-auto object-contain"
                  />
              </div>
           </div>
@@ -67,28 +68,28 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, cartCount, cur
             </button>
           </div>
 
-          {/* Left side: User/Auth - Visible on both Mobile and Desktop */}
+          {/* Left side: User/Auth - Mobile sizes and padding increased */}
           <div className="flex items-center gap-4">
             <div className="hidden md:block w-px h-8 bg-slate-800 mx-2"></div>
 
             {currentUser ? (
               <button 
                 onClick={() => setActiveTab('profile')}
-                className={`flex items-center gap-2 px-3 md:px-4 py-1 md:py-1.5 rounded-lg md:rounded-xl transition-all border ${activeTab === 'profile' ? 'bg-slate-800 border-pharmacy-500 text-pharmacy-500' : 'border-slate-700 text-slate-300 hover:bg-slate-800'}`}
+                className={`flex items-center gap-3 px-4 md:px-4 py-2 md:py-1.5 rounded-xl md:rounded-xl transition-all border ${activeTab === 'profile' ? 'bg-slate-800 border-pharmacy-500 text-pharmacy-500' : 'border-slate-700 text-slate-300 hover:bg-slate-800'}`}
               >
-                <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-pharmacy-600 flex items-center justify-center text-white text-[10px] md:text-base">
+                <div className="w-8 h-8 md:w-8 md:h-8 rounded-full bg-pharmacy-600 flex items-center justify-center text-white text-xs md:text-base">
                   {currentUser.firstName[0]}
                 </div>
-                <span className="text-[10px] md:text-sm font-bold truncate max-w-[60px] md:max-w-none">
+                <span className="text-xs md:text-sm font-bold truncate max-w-[80px] md:max-w-none">
                     {currentUser.firstName}
                 </span>
               </button>
             ) : (
               <button 
                 onClick={onLoginClick}
-                className="flex items-center gap-1.5 md:gap-2 bg-slate-800 text-white px-3 md:px-5 py-1.5 md:py-2.5 rounded-lg md:rounded-xl border border-slate-700 hover:border-pharmacy-500 transition-all text-[10px] md:text-sm font-bold"
+                className="flex items-center gap-2 bg-slate-800 text-white px-5 md:px-5 py-3 md:py-2.5 rounded-xl md:rounded-xl border border-slate-700 hover:border-pharmacy-500 transition-all text-xs md:text-sm font-bold shadow-xl active:scale-95"
               >
-                <UserIcon className="w-3 h-3 md:w-4 md:h-4" />
+                <UserIcon className="w-4 h-4 md:w-4 md:h-4" />
                 ورود <span className="hidden sm:inline">| ثبت نام</span>
               </button>
             )}

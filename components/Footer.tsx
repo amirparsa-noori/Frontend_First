@@ -37,15 +37,16 @@ const Footer = () => {
           </div>
 
           {/* Section 3: Contact Info (Leftmost) */}
-          <div>
+          <div className="flex flex-col items-end">
             <h4 className="text-white font-bold text-lg mb-6 font-display border-b border-slate-800 pb-2 inline-block">تماس با ما</h4>
-            <div className="space-y-4 text-slate-400 text-sm">
+            
+            <div className="space-y-4 text-slate-400 text-sm w-full">
               <div className="flex items-center gap-3 justify-end">
                 <span className="dir-ltr text-pharmacy-400 font-bold tracking-wider">۰۷۷-۳۳۳۳۱۰۰۸</span>
                 <Phone className="w-5 h-5 text-pharmacy-500" />
               </div>
               <div className="flex items-start gap-3 justify-end">
-                <span className="max-w-[200px] leading-relaxed text-slate-300">
+                <span className="max-w-[200px] leading-relaxed text-slate-300 text-right">
                   بوشهر، خیابان سنگی، نرسیده به میدان امام (ره)، روبروی سازمان انتقال خون
                 </span>
                 <MapPin className="w-5 h-5 text-pharmacy-500 mt-1 flex-shrink-0" />
@@ -54,6 +55,15 @@ const Footer = () => {
                 <Instagram className="w-6 h-6 hover:text-pink-500 cursor-pointer transition-all hover:scale-110" />
                 <Linkedin className="w-6 h-6 hover:text-blue-500 cursor-pointer transition-all hover:scale-110" />
               </div>
+            </div>
+
+            {/* Requested Logo addition specifically for this section - Box removed as requested */}
+            <div className="mt-8 transition-all hover:scale-105 group">
+                <img 
+                   src="https://s34.picofile.com/file/8488723676/logoshamimnasab2_2048x725.png" 
+                   alt="لوگو شمیم نسب ثانویه" 
+                   className="h-10 md:h-12 w-auto object-contain brightness-125 drop-shadow-[0_0_10px_rgba(20,184,166,0.2)]"
+                />
             </div>
           </div>
         </div>
