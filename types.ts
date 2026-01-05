@@ -1,4 +1,12 @@
 
+export interface ProductDetails {
+  properties: { label: string; value: string }[];
+  features: string[];
+  usage: string;
+  warnings: string;
+  storage: string;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -7,6 +15,8 @@ export interface Product {
   image: string;
   gallery?: string[];
   category: string;
+  brand: string;
+  details?: ProductDetails; // New optional field for specifications
 }
 
 export interface CartItem extends Product {
@@ -22,6 +32,30 @@ export interface Address {
   postalCode: string;
   lat: number;
   lng: number;
+}
+
+export interface Review {
+  id: string;
+  userId: string;
+  productId: number;
+  rating: number;
+  comment: string;
+  date: string;
+  userName: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  image: string;
+  author: string;
+  authorRole: string;
+  date: string;
+  readTime: string;
+  category: string;
+  relatedProductId?: number; // Links to a product
 }
 
 export interface User {
@@ -42,5 +76,20 @@ export enum ShippingMethod {
 export enum PaymentMethod {
   ZARINPAL = 'zarinpal',
   SAMAN = 'saman',
-  MELLAT = 'mellat'
+  MELLAT = 'mellat',
+  TARA = 'tara'
+}
+
+export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
+export interface Order {
+  id: string;
+  userId: string;
+  items: CartItem[];
+  totalPrice: number;
+  date: string;
+  status: OrderStatus;
+  trackingCode?: string;
+  shippingMethod: ShippingMethod;
+  address: Address;
 }

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ShoppingBag, Home, ShoppingCart, User as UserIcon, MessageSquare } from 'lucide-react';
+import { ShoppingBag, Home, ShoppingCart, User as UserIcon, MessageSquare, BookOpen } from 'lucide-react';
 import { User } from '../types';
 
 interface NavbarProps {
@@ -47,11 +47,19 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, cartCount, cur
             </button>
             
             <button 
+                onClick={() => setActiveTab('mag')}
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${activeTab === 'mag' ? 'text-pharmacy-500' : 'text-slate-300 hover:text-white'}`}
+            >
+                <BookOpen className="w-4 h-4" />
+                مجله سلامت
+            </button>
+
+            <button 
                 onClick={() => setActiveTab('consultation')}
                 className={`flex items-center gap-2 text-sm font-medium transition-colors ${activeTab === 'consultation' ? 'text-pharmacy-500' : 'text-slate-300 hover:text-white'}`}
             >
                 <MessageSquare className="w-4 h-4" />
-                مشاوره
+                مشاوره تخصصی
             </button>
 
             <button 
@@ -62,14 +70,22 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, cartCount, cur
                 سبد خرید
                 {cartCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full animate-bounce">
-                        {cartCount}
+                        {cartCount.toLocaleString('fa-IR')}
                     </span>
                 )}
             </button>
           </div>
 
-          {/* Left side: User/Auth - Mobile sizes and padding increased */}
-          <div className="flex items-center gap-4">
+          {/* Left side: User/Auth & Mobile Mag Link */}
+          <div className="flex items-center gap-3 md:gap-4">
+            {/* Mobile Mag Button */}
+            <button 
+                onClick={() => setActiveTab('mag')}
+                className={`md:hidden p-2 rounded-xl border transition-all ${activeTab === 'mag' ? 'bg-pharmacy-500 text-white border-pharmacy-500' : 'border-slate-700 text-slate-300'}`}
+            >
+                <BookOpen className="w-5 h-5" />
+            </button>
+
             <div className="hidden md:block w-px h-8 bg-slate-800 mx-2"></div>
 
             {currentUser ? (
@@ -87,7 +103,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, cartCount, cur
             ) : (
               <button 
                 onClick={onLoginClick}
-                className="flex items-center gap-2 bg-slate-800 text-white px-5 md:px-5 py-3 md:py-2.5 rounded-xl md:rounded-xl border border-slate-700 hover:border-pharmacy-500 transition-all text-xs md:text-sm font-bold shadow-xl active:scale-95"
+                className="flex items-center gap-2 bg-slate-800 text-white px-4 md:px-5 py-3 md:py-2.5 rounded-xl md:rounded-xl border border-slate-700 hover:border-pharmacy-500 transition-all text-xs md:text-sm font-bold shadow-xl active:scale-95 h-full"
               >
                 <UserIcon className="w-4 h-4 md:w-4 md:h-4" />
                 ورود <span className="hidden sm:inline">| ثبت نام</span>

@@ -42,12 +42,12 @@ const Footer = () => {
             
             <div className="space-y-4 text-slate-400 text-sm w-full">
               <div className="flex items-center gap-3 justify-end">
-                <span className="dir-ltr text-pharmacy-400 font-bold tracking-wider">۰۷۷-۳۳۳۳۱۰۰۸</span>
+                <span className="dir-ltr text-pharmacy-400 font-bold tracking-wider">۰۲۱-۲۲۵۷۸۱۸۶</span>
                 <Phone className="w-5 h-5 text-pharmacy-500" />
               </div>
               <div className="flex items-start gap-3 justify-end">
                 <span className="max-w-[200px] leading-relaxed text-slate-300 text-right">
-                  بوشهر، خیابان سنگی، نرسیده به میدان امام (ره)، روبروی سازمان انتقال خون
+                 خیابان پاسداران خیابان پایدارفرد نبش بوستان نهم پلاک ۱۰۷ مقابل بیمارستان لبافی نژاد
                 </span>
                 <MapPin className="w-5 h-5 text-pharmacy-500 mt-1 flex-shrink-0" />
               </div>
@@ -69,7 +69,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-slate-900 mt-16 pt-8 text-center text-slate-600 text-[10px] md:text-xs">
-          © 2024 Dr. Shamim Nasab Pharmacy. All rights reserved. طراحی شده با عشق برای سلامت جامعه.
+          © ۲۰۲۴ Dr. Shamim Nasab Pharmacy. All rights reserved. طراحی شده با عشق برای سلامت جامعه.
         </div>
       </div>
     </footer>

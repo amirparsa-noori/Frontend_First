@@ -41,7 +41,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ activeTab, setActiveTab, cartCoun
                 
                 {item.badge !== undefined && item.badge > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-900 animate-pulse">
-                    {item.badge}
+                    {item.badge.toLocaleString('fa-IR')}
                   </span>
                 )}
               </div>
