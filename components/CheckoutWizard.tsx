@@ -46,9 +46,10 @@ const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ items, user, onComplete
       {/* Progress Bar - With Icons */}
       <div className="mb-8 md:mb-12 shrink-0 relative z-10">
         <div className="flex items-center justify-between mb-2 relative">
-           {/* Line Background */}
-           <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-800 rounded-full -z-10 transform -translate-y-1/2"></div>
-           {/* Progress Line */}
+           {/* Dotted Line Background (Updated) */}
+           <div className="absolute top-1/2 left-0 right-0 border-t-2 border-dotted border-slate-700 -z-20 transform -translate-y-1/2 h-0"></div>
+           
+           {/* Progress Line (Solid) */}
            <div 
             className="absolute top-1/2 right-0 h-1 bg-pharmacy-500 rounded-full -z-10 transform -translate-y-1/2 transition-all duration-500 ease-out"
             style={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}

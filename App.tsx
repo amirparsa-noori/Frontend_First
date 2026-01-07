@@ -1191,7 +1191,7 @@ const App: React.FC = () => {
     icon: Icon, 
     accentColor, 
     gradientFrom, 
-    gradientTo,
+    gradientTo, 
     filterId
   }: { 
     title: string, 
@@ -1572,7 +1572,7 @@ const App: React.FC = () => {
                 </div>
 
                 {filteredProducts.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-10">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-8">
                         {filteredProducts.map((product) => (
                             <ProductCard 
                                 key={product.id} 
@@ -1649,6 +1649,7 @@ const App: React.FC = () => {
               onDeleteReview={handleDeleteReview}
               orders={orders}
               onCancelOrder={handleCancelOrder}
+              onOpenProduct={(p) => setSelectedProduct(p)}
             />
         )}
 
@@ -1656,11 +1657,24 @@ const App: React.FC = () => {
           <CheckoutWizard 
             items={cart} 
             user={currentUser} 
-            onComplete={() => {
-              alert('سفارش شما با موفقیت ثبت شد!');
-              setCart([]);
-              setActiveTab('home');
-            }} 
+            onComplete={(orderData: any) => {
+                const newOrder: Order = {
+                    id: `ORD-${Date.now().toString().slice(-6)}`,
+                    userId: currentUser.id,
+                    items: [...cart],
+                    totalPrice: orderData.total,
+                    date: new Date().toLocaleDateString('fa-IR'),
+                    status: 'pending',
+                    shippingMethod: orderData.shipping,
+                    address: currentUser.addresses.find(a => a.id === orderData.selectedAddress)!,
+                    trackingCode: undefined
+                };
+                
+                setOrders(prev => [newOrder, ...prev]);
+                setCart([]);
+                setActiveTab('profile'); // Redirect to profile to see the new order
+                alert('سفارش شما با موفقیت ثبت شد!');
+            }}
             onCancel={() => setActiveTab('cart')}
             onAddAddress={() => setIsAddressFormOpen(true)}
           />

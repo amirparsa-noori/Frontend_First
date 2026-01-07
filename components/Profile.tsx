@@ -16,6 +16,7 @@ interface ProfileProps {
   onDeleteReview: (id: string) => void;
   orders: Order[];
   onCancelOrder: (id: string) => void;
+  onOpenProduct: (product: Product) => void;
 }
 
 const toPersianDigits = (num: string | number) => {
@@ -34,7 +35,8 @@ const Profile: React.FC<ProfileProps> = ({
     onUpdateReview,
     onDeleteReview,
     orders,
-    onCancelOrder
+    onCancelOrder,
+    onOpenProduct
 }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'reviews'>('info');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -87,21 +89,23 @@ const Profile: React.FC<ProfileProps> = ({
   };
 
   const TimelineStep = ({ title, date, active, completed, last }: any) => (
-      <div className={`relative flex flex-col items-start md:items-center flex-1 ${!last ? 'pb-8 md:pb-0' : ''}`}>
-          {/* Connecting Line (Vertical on Mobile, Horizontal on Desktop) */}
+      <div className={`relative flex flex-row md:flex-col items-start md:items-center gap-4 md:gap-0 flex-1 ${!last ? 'pb-8 md:pb-0' : ''}`}>
+          {/* Connecting Line */}
           {!last && (
             <>
-                <div className={`absolute top-4 right-[15px] bottom-0 w-0.5 md:hidden ${completed ? 'bg-pharmacy-500' : 'bg-slate-700'}`}></div>
+                {/* Mobile Line: positioned relative to the icon (right side in RTL) */}
+                <div className={`absolute top-8 right-[15px] bottom-0 w-0.5 md:hidden ${completed ? 'bg-pharmacy-500' : 'bg-slate-700'}`}></div>
+                {/* Desktop Line */}
                 <div className={`hidden md:block absolute top-[15px] right-[50%] left-[-50%] h-0.5 ${completed ? 'bg-pharmacy-500' : 'bg-slate-700'}`}></div>
             </>
           )}
 
-          <div className={`z-10 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${
+          <div className={`z-10 w-8 h-8 rounded-full flex items-center justify-center border-2 shrink-0 transition-all ${
               completed || active ? 'bg-pharmacy-500 border-pharmacy-500 text-white' : 'bg-slate-800 border-slate-600 text-slate-500'
           }`}>
               {completed ? <CheckCircle className="w-5 h-5" /> : <div className={`w-3 h-3 rounded-full ${active ? 'bg-white animate-pulse' : 'bg-slate-600'}`}></div>}
           </div>
-          <div className="mt-2 md:text-center mr-4 md:mr-0">
+          <div className="md:mt-2 md:text-center">
               <span className={`block text-sm font-bold ${completed || active ? 'text-white' : 'text-slate-500'}`}>{title}</span>
               {date && <span className="text-xs text-slate-400 mt-1 block">{toPersianDigits(date)}</span>}
           </div>
@@ -309,20 +313,27 @@ const Profile: React.FC<ProfileProps> = ({
                           اقلام سفارش
                       </h4>
                       <div className="space-y-3">
-                          {selectedOrder.items.map((item, idx) => (
-                              <div key={idx} className="flex items-center gap-4 bg-slate-800 p-3 rounded-2xl border border-slate-700/50">
+                          {selectedOrder.items.map((item, idx) => {
+                              const product = products.find(p => p.id === item.id);
+                              return (
+                              <div 
+                                key={idx} 
+                                onClick={() => product && onOpenProduct(product)}
+                                className="flex items-center gap-4 bg-slate-800 p-3 rounded-2xl border border-slate-700/50 cursor-pointer hover:border-pharmacy-500 transition-colors group"
+                              >
                                   <div className="w-16 h-16 bg-white rounded-xl p-1 shrink-0">
                                       <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
                                   </div>
                                   <div className="flex-grow">
-                                      <h5 className="text-white font-bold text-sm mb-1 line-clamp-1">{item.name}</h5>
+                                      <h5 className="text-white font-bold text-sm mb-1 line-clamp-1 group-hover:text-pharmacy-400 transition-colors">{item.name}</h5>
                                       <span className="text-slate-500 text-xs">{toPersianDigits(item.quantity)} عدد</span>
                                   </div>
                                   <div className="text-left">
                                       <span className="text-pharmacy-400 font-bold text-sm block">{item.price}</span>
                                   </div>
                               </div>
-                          ))}
+                              );
+                          })}
                       </div>
                   </div>
 
@@ -382,29 +393,29 @@ const Profile: React.FC<ProfileProps> = ({
           </button>
         </div>
 
-        {/* Profile Tabs */}
-        <div className="flex gap-4 mb-6 border-b border-slate-700/50 pb-1 overflow-x-auto no-scrollbar">
+        {/* Profile Tabs - Optimized for Mobile Grid */}
+        <div className="grid grid-cols-3 gap-2 mb-6 border-b border-slate-700/50 pb-1">
             <button 
                 onClick={() => setActiveTab('info')}
-                className={`pb-3 px-2 text-sm font-bold transition-all relative whitespace-nowrap ${activeTab === 'info' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
+                className={`pb-3 px-1 text-[10px] md:text-sm font-bold transition-all relative flex items-center justify-center ${activeTab === 'info' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
             >
-                اطلاعات و آدرس‌ها
+                اطلاعات
                 {activeTab === 'info' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-pharmacy-500 rounded-t-full"></span>}
             </button>
             <button 
                 onClick={() => setActiveTab('orders')}
-                className={`pb-3 px-2 text-sm font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'orders' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
+                className={`pb-3 px-1 text-[10px] md:text-sm font-bold transition-all relative flex items-center justify-center gap-1 md:gap-2 ${activeTab === 'orders' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
             >
-                سفارش‌های من
-                <span className="bg-slate-700 text-white text-[10px] px-1.5 py-0.5 rounded-full">{toPersianDigits(orders.length)}</span>
+                سفارش‌ها
+                <span className="bg-slate-700 text-white text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full">{toPersianDigits(orders.length)}</span>
                 {activeTab === 'orders' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-pharmacy-500 rounded-t-full"></span>}
             </button>
             <button 
                 onClick={() => setActiveTab('reviews')}
-                className={`pb-3 px-2 text-sm font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'reviews' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
+                className={`pb-3 px-1 text-[10px] md:text-sm font-bold transition-all relative flex items-center justify-center gap-1 md:gap-2 ${activeTab === 'reviews' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
             >
-                نظرات من
-                <span className="bg-slate-700 text-white text-[10px] px-1.5 py-0.5 rounded-full">{toPersianDigits(userReviews.length)}</span>
+                نظرات
+                <span className="bg-slate-700 text-white text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full">{toPersianDigits(userReviews.length)}</span>
                 {activeTab === 'reviews' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-pharmacy-500 rounded-t-full"></span>}
             </button>
         </div>
@@ -467,13 +478,13 @@ const Profile: React.FC<ProfileProps> = ({
                 {orders.length > 0 ? (
                     orders.map((order) => (
                         <div key={order.id} className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4 md:p-6 transition-all hover:border-slate-600 group">
-                            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-slate-800 p-3 rounded-2xl">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+                                <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-right w-full md:w-auto">
+                                    <div className="bg-slate-800 p-3 rounded-2xl shrink-0">
                                         <Package className="w-6 h-6 text-pharmacy-500" />
                                     </div>
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-1">
+                                    <div className="flex flex-col items-center md:items-start">
+                                        <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 mb-1">
                                             <h4 className="font-bold text-white text-lg">سفارش {toPersianDigits(order.id)}</h4>
                                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getStatusColor(order.status)}`}>
                                                 {getStatusLabel(order.status)}
@@ -486,14 +497,17 @@ const Profile: React.FC<ProfileProps> = ({
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-left">
-                                    <span className="block text-xs text-slate-500 mb-1">مبلغ کل</span>
-                                    <span className="block text-xl font-bold text-white">{toPersianDigits(order.totalPrice.toLocaleString())} <span className="text-xs text-slate-500 font-normal">تومان</span></span>
+                                <div className="flex flex-row justify-between w-full md:w-auto md:block text-left border-t border-slate-800 md:border-t-0 pt-3 md:pt-0">
+                                    <span className="block text-xs text-slate-500 mb-1 md:hidden">مبلغ کل:</span>
+                                    <div>
+                                        <span className="hidden md:block text-xs text-slate-500 mb-1">مبلغ کل</span>
+                                        <span className="block text-xl font-bold text-white">{toPersianDigits(order.totalPrice.toLocaleString())} <span className="text-xs text-slate-500 font-normal">تومان</span></span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Order Items Preview */}
-                            <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar mb-4">
+                            <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar mb-4 justify-center md:justify-start">
                                 {order.items.map((item, idx) => (
                                     <div key={idx} className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-xl p-1 shrink-0 border border-slate-700">
                                         <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
