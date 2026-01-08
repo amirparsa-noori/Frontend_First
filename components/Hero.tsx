@@ -63,7 +63,7 @@ const Hero: React.FC<HeroProps> = ({ onExplore, onConsultation, generatedVideoUr
         <div className="relative animate-float-slow">
           <div className="absolute inset-0 bg-pharmacy-500/20 blur-[25px] rounded-full scale-150 animate-pulse"></div>
           <img 
-            src="https://s34.picofile.com/file/8488723676/logoshamimnasab2_2048x725.png" 
+            src="https://drshamimnasab.ir/wp-content/uploads/2026/01/logoshamimnasab2_2048x725.png" 
             alt="suspended logo" 
             className="w-20 md:w-28 h-auto object-contain brightness-150 drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] relative z-10"
           />

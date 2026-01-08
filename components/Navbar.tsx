@@ -18,15 +18,13 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, cartCount, cur
         {/* Mobile height increased from h-14 to h-20 for better touch compatibility */}
         <div className="flex items-center justify-between h-20 md:h-20">
           
-          {/* Right side: Logo - Mobile size increased */}
+          {/* Right side: Logo - Reduced size as requested */}
           <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab('home')}>
-             <div className="bg-white/95 px-4 md:px-4 py-2 md:py-1.5 rounded-xl md:rounded-xl shadow-lg transition-all duration-300 group-hover:scale-105 border border-white/20">
-                 <img 
-                   src="https://drshamimnasab.ir/wp-content/uploads/2023/06/logoshamimnasab2-2048x725.png" 
-                   alt="داروخانه دکتر شمیم نسب" 
-                   className="h-10 md:h-9 w-auto object-contain"
-                 />
-             </div>
+             <img 
+               src="https://drshamimnasab.ir/wp-content/uploads/2026/01/lorr.png" 
+               alt="داروخانه دکتر شمیم نسب" 
+               className="h-9 md:h-11 w-auto object-contain transition-all duration-300 group-hover:scale-105"
+             />
           </div>
 
           {/* Center: Navigation Links (Desktop only) */}

@@ -13,7 +13,7 @@ import CheckoutWizard from './components/CheckoutWizard';
 import Consultation from './components/Consultation';
 import MobileNav from './components/MobileNav';
 import Magazine from './components/Magazine';
-import { Product, CartItem, User, Address, Review, BlogPost, Order, OrderStatus, ShippingMethod } from './types';
+import { Product, CartItem, User, Address, Review, BlogPost, Order, OrderStatus, ShippingMethod, Ticket, TicketMessage } from './types';
 import { ArrowDown, Search, X as CloseIcon, SlidersHorizontal, Baby, Dumbbell, Pill, Sparkles, Feather, LayoutGrid, Bone, Filter, SortAsc, SortDesc, Zap, ChevronLeft, ArrowLeft, Stethoscope, RotateCcw } from 'lucide-react';
 
 // --- EXPANDED DATA ---
@@ -731,7 +731,7 @@ const MOCK_PRODUCTS: Product[] = [
 ];
 
 const MOCK_POSTS: BlogPost[] = [
-  {
+    {
     id: '1',
     title: 'همه چیز درباره ضدآفتاب‌های SPF50 و تاثیر آنها بر پوست چرب',
     excerpt: 'انتخاب ضدآفتاب مناسب برای پوست‌های چرب همیشه چالش‌برانگیز است. در این مقاله به بررسی تاثیر SPF50 و ترکیبات موثر در کرم‌های لافارر می‌پردازیم.',
@@ -746,182 +746,116 @@ const MOCK_POSTS: BlogPost[] = [
     date: '۱۴۰۲/۱۱/۱۰',
     readTime: '۵ دقیقه',
     category: 'پوست و مو',
-    relatedProductId: 1
+    relatedProductIds: [1]
   },
   {
     id: '2',
-    title: 'معجزه کلاژن برای جوانسازی پوست: واقعیت یا تبلیغ؟',
-    excerpt: 'آیا قرص‌های کلاژن واقعاً تاثیرگذار هستند؟ بررسی علمی تاثیر مکمل‌های کلاژن بر کاهش چین و چروک و سلامت مو و ناخن.',
-    content: `با افزایش سن، تولید کلاژن طبیعی در بدن کاهش می‌یابد که منجر به افتادگی پوست و ایجاد چین و چروک می‌شود. مکمل‌های کلاژن هیدرولیز شده، مانند کلاژن گلد، حاوی پپتیدهای کوچکی هستند که جذب بسیار بالایی دارند.
+    title: 'درمان ریزش مو با کافئین؛ حقیقت یا افسانه؟',
+    excerpt: 'آیا شامپوهای حاوی کافئین واقعاً می‌توانند ریزش موی ارثی را درمان کنند؟ بررسی علمی تاثیر کافئین و مکمل هیرتامین بر فولیکول مو.',
+    content: `ریزش موی آندروژنیک یا ارثی یکی از شایع‌ترین مشکلات در آقایان و خانم‌هاست. تحقیقات نشان داده‌اند که کافئین می‌تواند با مهار اثرات دی‌هیدروتستوسترون (DHT) بر فولیکول مو، فاز رشد مو را طولانی‌تر کند.
     
-    مطالعات نشان داده‌اند که مصرف منظم کلاژن به مدت ۸ تا ۱۲ هفته می‌تواند رطوبت پوست را افزایش داده و عمق چروک‌ها را کاهش دهد. همچنین، کلاژن جزء اصلی ساختار مو و ناخن است و مصرف آن به استحکام و درخشندگی آنها کمک می‌کند.
+    شامپوهای کافئین‌دار سریتا با افزایش گردش خون مویرگی در پوست سر، مواد مغذی بیشتری را به ریشه مو می‌رسانند. اما شامپو به تنهایی کافی نیست. استفاده از مکمل‌های تخصصی مثل هیرتامین که حاوی بیوتین، زینک و آنتی‌اکسیدان‌های قوی است، درمان را تکمیل می‌کند.
     
-    بهترین زمان مصرف کلاژن، شب‌ها قبل از خواب یا صبح ناشتا است تا جذب حداکثری داشته باشد.`,
-    image: 'https://images.unsplash.com/photo-1596704017235-dca31dc7120e?q=80&w=2070&auto=format&fit=crop',
-    author: 'دکتر علی علوی',
-    authorRole: 'متخصص تغذیه',
-    date: '۱۴۰۲/۱۱/۰۵',
-    readTime: '۴ دقیقه',
-    category: 'مکمل دارویی',
-    relatedProductId: 3
+    ترکیب درمان موضعی (شامپو) و خوراکی (مکمل) بهترین استراتژی برای مقابله با ریزش مو است.`,
+    image: 'https://images.unsplash.com/photo-1632059368552-198160024513?q=80&w=2070',
+    author: 'دکتر شمیم نسب',
+    authorRole: 'دکترای داروسازی',
+    date: '۱۴۰۲/۱۱/۱۲',
+    readTime: '۶ دقیقه',
+    category: 'پوست و مو',
+    relatedProductIds: [5, 7]
   },
   {
     id: '3',
-    title: 'راهنمای جامع مصرف پروتئین وی برای ورزشکاران',
-    excerpt: 'چه زمانی پروتئین وی مصرف کنیم؟ تفاوت کنسانتره و ایزوله چیست؟ راهنمای کامل برای عضله‌سازی بهتر.',
-    content: `پروتئین وی یکی از کامل‌ترین منابع پروتئینی است که تمامی اسیدهای آمینه ضروری بدن را تامین می‌کند. پروتئین وی کاله با خلوص بالا، انتخابی عالی برای ریکاوری سریع عضلات بعد از تمرینات سنگین است.
+    title: 'روتین پوستی برای منافذ باز و جوش صورت',
+    excerpt: 'اگر از پوست پرتقالی و جوش‌های زیرپوستی خسته شده‌اید، نیاسینامید و آبرسان‌های فاقد چربی بهترین دوستان شما هستند.',
+    content: `منافذ باز پوست معمولاً نتیجه ترشح بیش از حد چربی و کاهش خاصیت ارتجاعی پوست هستند. سرم نیاسینامید اوردینری یکی از موثرترین ترکیبات برای تنظیم چربی و کوچک کردن ظاهر منافذ است.
     
-    بهترین زمان مصرف بلافاصله بعد از تمرین است، زیرا در این زمان عضلات بیشترین نیاز را به مواد مغذی برای بازسازی دارند. همچنین مصرف آن در صبح ناشتا برای توقف کاتابولیسم شبانه توصیه می‌شود.`,
-    image: 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?q=80&w=1887&auto=format&fit=crop',
-    author: 'دکتر سارا محمدی',
-    authorRole: 'متخصص پزشکی ورزشی',
-    date: '۱۴۰۲/۱۰/۲۰',
-    readTime: '۶ دقیقه',
-    category: 'ورزشی',
-    relatedProductId: 4
+    بسیاری از افراد با پوست چرب اشتباهاً فکر می‌کنند نیازی به آبرسان ندارند. اما دهیدراته شدن پوست باعث ترشح چربی بیشتر می‌شود! کرم آبرسان وچه با بافت سبک خود بدون ایجاد جوش، رطوبت لازم را تامین می‌کند.
+    
+    استفاده از تونر سی‌گل حاوی ویتامین C نیز می‌تواند به عنوان یک مرحله تکمیلی، باقیمانده آلودگی‌ها را از عمق منافذ پاک کرده و پوست را شفاف کند.`,
+    image: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?q=80&w=2070',
+    author: 'دکتر شمیم نسب',
+    authorRole: 'دکترای داروسازی',
+    date: '۱۴۰۲/۱۱/۱۵',
+    readTime: '۴ دقیقه',
+    category: 'پوست و مو',
+    relatedProductIds: [9, 11, 12]
   },
   {
     id: '4',
-    title: 'توقف ریزش مو با قدرت کافئین: بررسی علمی شامپو سریتا',
-    excerpt: 'کافئین چگونه بر فولیکول‌های مو تاثیر می‌گذارد؟ آیا شامپوهای کافئین‌دار واقعاً از ریزش موی ارثی جلوگیری می‌کنند؟',
-    content: `ریزش موی آندروژنیک یکی از شایع‌ترین مشکلات در بین آقایان و خانم‌هاست. تحقیقات نشان داده که کافئین می‌تواند اثرات منفی هورمون دی‌هیدروتستوسترون (DHT) را خنثی کرده و فاز رشد مو را طولانی‌تر کند.
+    title: 'راهنمای تغذیه نوزاد؛ از شیر خشک تا شیشه شیر مناسب',
+    excerpt: 'انتخاب شیر خشک مناسب و شیشه شیر ضد نفخ می‌تواند چالش‌های تغذیه نوزاد را به حداقل برساند. نکاتی که هر مادری باید بداند.',
+    content: `شیر مادر بهترین غذا برای نوزاد است، اما در صورت نیاز به شیر خشک، انتخاب برندی که نزدیک‌ترین فرمولاسیون به شیر مادر را داشته باشد اهمیت دارد. شیر خشک آپتامیل با داشتن پره‌بیوتیک‌ها به سیستم ایمنی نوزاد کمک می‌کند.
     
-    شامپو ضد ریزش سریتا با داشتن کافئین کپسوله شده، نفوذپذیری بالایی به ریشه مو دارد. این محصول علاوه بر کافئین، حاوی عصاره ساوپالمتو است که یک مهارکننده طبیعی آنزیم ۵-آلفا ردوکتاز محسوب می‌شود.
-    
-    برای گرفتن بهترین نتیجه، توصیه می‌شود کف شامپو حداقل ۳ دقیقه روی سر بماند تا ترکیبات فعال آن فرصت جذب داشته باشند.`,
-    image: 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?q=80&w=2070&auto=format&fit=crop',
-    author: 'دکتر مریم راد',
-    authorRole: 'متخصص پوست و مو',
-    date: '۱۴۰۲/۱۰/۲۸',
+    یکی از مشکلات رایج نوزادان، کولیک و نفخ است. استفاده از شیشه شیرهای استاندارد مثل اونت که سیستم آنتی‌کولیک دارند، از ورود هوا به معده نوزاد جلوگیری کرده و دل‌درد را کاهش می‌دهد.`,
+    image: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=2070',
+    author: 'دکتر متخصص اطفال',
+    authorRole: 'مهمان',
+    date: '۱۴۰۲/۱۱/۱۸',
     readTime: '۵ دقیقه',
-    category: 'پوست و مو',
-    relatedProductId: 5
+    category: 'مادر و کودک',
+    relatedProductIds: [6, 22]
   },
   {
     id: '5',
-    title: 'خداحافظی با جوش‌های زیرپوستی با معجزه نیاسینامید',
-    excerpt: 'نیاسینامید چیست و چرا باید در روتین پوستی شما باشد؟ بررسی سرم اوردینری برای پوست‌های مستعد آکنه.',
-    content: `نیاسینامید یا ویتامین B3 یکی از محبوب‌ترین ترکیبات در دنیای مراقبت از پوست است. این ماده با تنظیم ترشح چربی (سبوم) پوست، از بسته شدن منافذ و ایجاد جوش جلوگیری می‌کند.
+    title: 'تقویت سیستم ایمنی و مفاصل با مکمل‌های ضروری',
+    excerpt: 'چرا باید امگا ۳ و ویتامین C مصرف کنیم؟ بررسی نقش این مکمل‌ها در سلامت قلب، مفاصل و پیشگیری از بیماری‌ها.',
+    content: `در دنیای پر استرس امروز، بدن ما نیاز به حمایت بیشتری دارد. ویتامین C یوروویتال نه تنها سیستم ایمنی را تقویت می‌کند، بلکه برای ساخت کلاژن ضروری است.
     
-    سرم نیاسینامید ۱۰٪ اوردینری نه تنها جوش‌ها را کنترل می‌کند، بلکه به مرور زمان لک‌های ناشی از جوش (اسکار آکنه) را نیز کمرنگ می‌کند. وجود زینک در این سرم به تسکین التهابات پوستی کمک شایانی می‌کند.
-    
-    نکته مهم: اگر پوست حساسی دارید، ابتدا با غلظت‌های کمتر شروع کنید یا سرم را به صورت یک شب در میان استفاده نمایید.`,
-    image: 'https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?q=80&w=1887&auto=format&fit=crop',
-    author: 'دکتر مینا سعیدی',
-    authorRole: 'داروساز',
-    date: '۱۴۰۲/۱۱/۰۲',
-    readTime: '۴ دقیقه',
-    category: 'پوست و مو',
-    relatedProductId: 9
+    از طرف دیگر، اسیدهای چرب امگا ۳ که در کپسول‌های زهراوی یافت می‌شوند، خاصیت ضدالتهابی قوی دارند. این خاصیت برای کاهش دردهای مفصلی و همچنین حفظ سلامت قلب و عروق بسیار حیاتی است. مصرف منظم این مکمل‌ها کیفیت زندگی را به طور چشمگیری بهبود می‌بخشد.`,
+    image: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?q=80&w=2070',
+    author: 'دکتر شمیم نسب',
+    authorRole: 'دکترای داروسازی',
+    date: '۱۴۰۲/۱۱/۲۰',
+    readTime: '۳ دقیقه',
+    category: 'مکمل های غذایی دارویی',
+    relatedProductIds: [17, 18]
   },
   {
     id: '6',
-    title: 'همه چیز درباره شیرخشک آپتامیل و سیستم ایمنی نوزاد',
-    excerpt: 'چرا شیرخشک آپتامیل شبیه‌ترین فرمولاسیون به شیر مادر را دارد؟ نقش پره‌بیوتیک‌ها در سلامت گوارش کودک.',
-    content: `تغذیه نوزاد در ماه‌های اول زندگی پایه‌گذار سلامت او در آینده است. شیرخشک آپتامیل با داشتن ترکیبات پره‌بیوتیک (GOS/FOS)، به رشد باکتری‌های مفید روده کمک کرده و سیستم ایمنی نوزاد را تقویت می‌کند.
+    title: 'پیشگیری و درمان دردهای ارتوپدی در منزل',
+    excerpt: 'چگونه از مچ دست و زانو در برابر آسیب‌های روزمره محافظت کنیم؟ معرفی ساپورت‌های طبی استاندارد.',
+    content: `کار با کامپیوتر و گوشی موبایل باعث شیوع سندرم تونل کارپال شده است. استفاده از مچ‌بندهای آتل‌دار پاک‌سمن در زمان استراحت می‌تواند فشار را از روی عصب مدیان برداشته و درد را کاهش دهد.
     
-    این شیرخشک همچنین حاوی اسیدهای چرب ضروری AA و DHA است که برای تکامل مغز و بینایی نوزاد حیاتی هستند. اگر نوزاد شما دچار کولیک یا آلرژی نیست، آپتامیل ساده یکی از بهترین گزینه‌ها برای جایگزینی یا مکمل شیر مادر است.`,
-    image: 'https://images.unsplash.com/photo-1632053001869-7c8fa07137b0?q=80&w=2070&auto=format&fit=crop',
-    author: 'دکتر حسین تهرانی',
-    authorRole: 'متخصص اطفال',
-    date: '۱۴۰۲/۱۰/۱۵',
-    readTime: '۶ دقیقه',
-    category: 'مادر و کودک',
-    relatedProductId: 6
+    همچنین زانو درد یکی از شکایات شایع در سنین مختلف است. زانوبندهای کشکک باز با تثبیت کشکک و گرم نگه داشتن مفصل، از آسیب‌های بیشتر جلوگیری می‌کنند.`,
+    image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=2080',
+    author: 'فیزیوتراپ',
+    authorRole: 'مهمان',
+    date: '۱۴۰۲/۱۱/۲۲',
+    readTime: '۴ دقیقه',
+    category: 'محصولات ارتوپدی',
+    relatedProductIds: [10, 23]
   },
   {
     id: '7',
-    title: 'ویتامین C: فراتر از یک تقویت‌کننده سیستم ایمنی',
-    excerpt: 'چرا ورزشکاران و افراد سیگاری به ویتامین C بیشتری نیاز دارند؟ بررسی قرص جوشان یوروویتال.',
-    content: `همه ما ویتامین C را با سرماخوردگی می‌شناسیم، اما این ویتامین نقش‌های بسیار مهم‌تری دارد. ویتامین C یک آنتی‌اکسیدان قوی است که از سلول‌ها در برابر استرس اکسیداتیو محافظت می‌کند.
+    title: 'آرایش روزانه سبک و بادوام با محصولات فاقد سرب',
+    excerpt: 'معرفی یک روتین آرایشی ساده با استفاده از ریمل اسنس، کرم پودر کالیستا و رژ لب این‌لی.',
+    content: `برای یک آرایش روزانه، سلامت پوست در اولویت است. استفاده از محصولات فاقد سرب و پارابن مثل رژ لب‌های این‌لی از خشکی و تیرگی لب جلوگیری می‌کند.
     
-    این ویتامین برای ساخت کلاژن ضروری است، بنابراین کمبود آن می‌تواند منجر به پیری زودرس پوست و دیر خوب شدن زخم‌ها شود. ورزشکاران به دلیل فعالیت بدنی شدید و تولید رادیکال‌های آزاد، نیاز بیشتری به این ویتامین دارند.
-    
-    قرص جوشان یوروویتال با دوز مناسب و جذب سریع، گزینه‌ای عالی برای تامین نیاز روزانه است.`,
-    image: 'https://images.unsplash.com/photo-1617109033379-679905c14902?q=80&w=2000&auto=format&fit=crop',
-    author: 'دکتر زهرا کیانی',
-    authorRole: 'متخصص تغذیه',
-    date: '۱۴۰۲/۱۱/۱۲',
-    readTime: '۳ دقیقه',
-    category: 'مکمل دارویی',
-    relatedProductId: 17
+    کرم پودر کالیستا با بافت مخملی خود پوششی یکدست ایجاد می‌کند اما منافذ را نمی‌بندد. در نهایت، یک ریمل خوب مثل اسنس می‌تواند گیرایی چشم‌ها را چند برابر کند بدون اینکه باعث ریزش مژه شود.`,
+    image: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=2070',
+    author: 'بیوتی بلاگر',
+    authorRole: 'مهمان',
+    date: '۱۴۰۲/۱۱/۲۵',
+    readTime: '۵ دقیقه',
+    category: 'محصولات آرایشی بهداشتی',
+    relatedProductIds: [13, 14, 15]
   },
   {
     id: '8',
-    title: 'راز پاکسازی دو مرحله‌ای پوست با میسلار واتر',
-    excerpt: 'چرا شستن صورت با آب و صابون کافی نیست؟ اهمیت استفاده از میسلار واتر قبل از شوینده.',
-    content: `آلاینده‌های هوا، ضدآفتاب و مواد آرایشی اغلب با شوینده‌های معمولی به طور کامل پاک نمی‌شوند و در منافذ باقی می‌مانند. این موضوع به مرور باعث کدری پوست و ایجاد جوش شود.
+    title: 'افزایش حجم عضله یا کاهش وزن؟ کدام مکمل ورزشی مناسب شماست؟',
+    excerpt: 'تفاوت پروتئین وی، گینر و کراتین چیست و کدام یک شما را سریع‌تر به هدف ورزشی‌تان می‌رساند؟',
+    content: `انتخاب مکمل ورزشی کاملاً به تیپ بدنی و هدف شما بستگی دارد. اگر لاغر هستید و به سختی وزن می‌گیرید (اکتومورف)، گینر سریوس مس با کالری بالا بهترین انتخاب است.
     
-    میسلار واتر گارنیر حاوی ذرات میسل است که مانند آهنربا آلودگی‌ها و چربی‌ها را به خود جذب می‌کند. استفاده از این محصول به عنوان مرحله اول پاکسازی (Double Cleansing)، پوست را کاملاً تمیز کرده و آماده جذب سرم‌ها و کرم‌ها می‌کند.
-    
-    این محصول نیاز به آبکشی ندارد و برای انواع پوست، حتی پوست‌های حساس مناسب است.`,
-    image: 'https://images.unsplash.com/photo-1555677271-42790757d77b?q=80&w=2000&auto=format&fit=crop',
-    author: 'مهسا ایرانی',
-    authorRole: 'بیوتی تراپیست',
-    date: '۱۴۰۲/۱۰/۲۵',
-    readTime: '۴ دقیقه',
-    category: 'آرایشی بهداشتی',
-    relatedProductId: 16
-  },
-  {
-    id: '9',
-    title: 'سندرم تونل کارپال چیست و چگونه درمان می‌شود؟',
-    excerpt: 'آیا درد مچ دست شما ناشی از کار با کامپیوتر است؟ نقش مچ‌بندهای آتل‌دار در بهبود درد.',
-    content: `سندرم تونل کارپال ناشی از فشار بر عصب مدیان در مچ دست است که با علائمی مثل گزگز، بی‌حسی و درد در انگشتان همراه است. این مشکل در بین تایپیست‌ها، کاربران کامپیوتر و کسانی که حرکات تکراری دست دارند شایع است.
-    
-    استفاده از مچ‌بند آتل‌دار پاک سمن، با ثابت نگه داشتن مچ در وضعیت خنثی، فشار را از روی عصب برداشته و به کاهش التهاب کمک می‌کند. استفاده شبانه از این مچ‌بند اغلب اولین خط درمان توصیه شده توسط پزشکان است.`,
-    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop',
-    author: 'دکتر امیررضا پناهی',
-    authorRole: 'فیزیوتراپیست',
-    date: '۱۴۰۲/۱۱/۰۸',
-    readTime: '۵ دقیقه',
-    category: 'ارتوپدی',
-    relatedProductId: 10
-  },
-  {
-    id: '10',
-    title: 'افزایش وزن اصولی با گینر: بایدها و نبایدها',
-    excerpt: 'تفاوت گینر و پروتئین وی چیست؟ چگونه بدون چربی شکمی وزن اضافه کنیم؟',
-    content: `برای کسانی که تیپ بدنی اکتومورف (لاغر اندام) دارند، افزایش وزن می‌تواند چالش‌برانگیز باشد. گینرها مکمل‌هایی هستند که علاوه بر پروتئین، مقادیر بالایی کربوهیدرات دارند تا کالری مازاد مورد نیاز بدن را تامین کنند.
-    
-    گینر سریوس مس اپتیموم یکی از باکیفیت‌ترین گینرهای بازار است که نسبت مناسبی از کربوهیدرات به پروتئین دارد. نکته کلیدی در مصرف گینر، همراهی آن با تمرینات بدنسازی است؛ در غیر این صورت کالری اضافی تبدیل به چربی شکمی خواهد شد.`,
-    image: 'https://images.unsplash.com/photo-1579722820308-d74e571900a9?q=80&w=2000&auto=format&fit=crop',
-    author: 'علی کریمی',
-    authorRole: 'مربی بدنسازی',
-    date: '۱۴۰۲/۱۰/۳۰',
-    readTime: '۵ دقیقه',
-    category: 'ورزشی',
-    relatedProductId: 20
-  },
-  {
-    id: '11',
-    title: 'امگا ۳: دوست قلب و دشمن التهاب',
-    excerpt: 'چرا باید امگا ۳ مصرف کنیم؟ تاثیر روغن ماهی بر سلامت قلب، مغز و مفاصل.',
-    content: `اسیدهای چرب امگا ۳ چربی‌های ضروری هستند که بدن قادر به تولید آنها نیست. این ترکیبات نقش مهمی در کاهش تری‌گلیسیرید خون، تنظیم فشار خون و پیشگیری از بیماری‌های قلبی دارند.
-    
-    علاوه بر سلامت قلب، امگا ۳ خاصیت ضدالتهابی قوی دارد و می‌تواند به کاهش دردهای مفصلی در بیماران آرتروز کمک کند. کپسول امگا ۳ زهراوی با جیوه تصفیه شده، گزینه‌ای ایمن و موثر برای تامین این ماده حیاتی است.`,
-    image: 'https://images.unsplash.com/photo-1550572017-4fcdbb56321f?q=80&w=2000&auto=format&fit=crop',
-    author: 'دکتر لیلا صادقی',
-    authorRole: 'داروساز بالینی',
-    date: '۱۴۰۲/۱۱/۱۵',
-    readTime: '۴ دقیقه',
-    category: 'مکمل دارویی',
-    relatedProductId: 18
-  },
-  {
-    id: '12',
-    title: 'راهنمای انتخاب پوشک مناسب برای پوست حساس نوزاد',
-    excerpt: 'چگونه از ادرار سوختگی جلوگیری کنیم؟ ویژگی‌های یک پوشک خوب چیست؟',
-    content: `پوست نوزاد بسیار نازک و حساس است و تماس طولانی مدت با رطوبت می‌تواند باعث ایجاد راش (ادرار سوختگی) شود. انتخاب پوشک با قدرت جذب بالا و لایه داخلی نرم بسیار مهم است.
-    
-    پوشک مای بیبی با تکنولوژی عبور هوا و لایه کتان، از تعریق و حساسیت جلوگیری می‌کند. همچنین تعویض به موقع پوشک و استفاده از کرم‌های محافظت کننده در هر بار تعویض، کلید داشتن پوستی سالم برای نوزاد است.`,
-    image: 'https://images.unsplash.com/photo-1551806371-d648b26500b5?q=80&w=2000&auto=format&fit=crop',
-    author: 'مریم نوری',
-    authorRole: 'کارشناس مامایی',
-    date: '۱۴۰۲/۱۱/۰۱',
-    readTime: '۴ دقیقه',
-    category: 'مادر و کودک',
-    relatedProductId: 21
+    اما اگر هدف شما عضله‌سازی خشک و ریکاوری سریع است، پروتئین وی کاله گزینه ایده‌آلی است. کراتین نیز به عنوان یک مکمل قدرتی، توان شما را در تمرینات انفجاری افزایش می‌دهد و به حجم‌دهی سلول‌های عضلانی کمک می‌کند.`,
+    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=2070',
+    author: 'مربی بدنسازی',
+    authorRole: 'مهمان',
+    date: '۱۴۰۲/۱۱/۲۸',
+    readTime: '۷ دقیقه',
+    category: 'مکمل های ورزشی',
+    relatedProductIds: [4, 19, 20]
   }
 ];
 
@@ -938,66 +872,132 @@ const CATEGORY_ITEMS = [
 const BRANDS = ["Lafarrerr", "Prime", "Cerita", "The Ordinary", "Simple", "Kalleh", "Aptamil", "My Baby", "Paksaman", "Cinere", "Seagull", "Callista", "Beurer", "Berry", "Xiaomi"];
 
 const MOCK_REVIEWS: Review[] = [
-  { id: '1', userId: 'user1', productId: 1, rating: 5, comment: 'عالی بود، پوستم خیلی شفاف شده.', date: '۱۴۰۲/۱۰/۱۲', userName: 'سارا' },
-  { id: '2', userId: 'user2', productId: 1, rating: 4, comment: 'خوبه ولی حجمش کمه.', date: '۱۴۰۲/۱۰/۱۵', userName: 'مریم' },
-  { id: '3', userId: 'user3', productId: 4, rating: 5, comment: 'بهترین پروتئینی که تا حالا خوردم.', date: '۱۴۰۲/۱۱/۰۱', userName: 'علی' },
+  { id: '1', userId: 'user1', productId: 1, rating: 5, comment: 'عالی بود، پوستم خیلی شفاف شده.', date: '۱۴۰۲/۱۱/۱۲', userName: 'سارا' },
+  { id: '2', userId: 'user2', productId: 1, rating: 4, comment: 'خوبه ولی حجمش کمه.', date: '۱۴۰۲/۱۱/۱۵', userName: 'مریم' },
 ];
 
-// Mock Address for Orders
-const MOCK_ADDRESS: Address = {
-    id: "addr1",
-    title: "منزل",
-    city: "تهران",
-    province: "تهران",
-    fullAddress: "تهران، خیابان پاسداران، خیابان پایدارفرد، پلاک ۱۰۷",
-    postalCode: "1234567890",
-    lat: 35.6892,
-    lng: 51.3890
+const generateMockOrders = (): Order[] => {
+    return [
+        {
+            id: 'ORD-982145',
+            userId: 'user1',
+            items: [
+                { ...MOCK_PRODUCTS[0], quantity: 1 },
+                { ...MOCK_PRODUCTS[2], quantity: 2 }
+            ],
+            totalPrice: 1520000,
+            date: '۱۴۰۲/۱۰/۱۵',
+            status: 'delivered',
+            shippingMethod: ShippingMethod.POST,
+            address: {
+                id: 'addr1',
+                title: 'منزل',
+                city: 'تهران',
+                province: 'تهران',
+                fullAddress: 'تهران، خیابان شریعتی، بالاتر از پل صدر',
+                postalCode: '193954678',
+                lat: 35.7,
+                lng: 51.4
+            },
+            trackingCode: '24685145987512345689'
+        }
+    ];
 };
 
-// Create Mock Orders based on Products
-const generateMockOrders = (): Order[] => [
-    {
-        id: "ORD-123456",
-        userId: "current-user",
-        items: [
-            { ...MOCK_PRODUCTS[0], quantity: 1 },
-            { ...MOCK_PRODUCTS[5], quantity: 2 }
-        ],
-        totalPrice: 1200000,
-        date: "1402/12/10",
-        status: "processing",
-        trackingCode: "2456123456",
-        shippingMethod: ShippingMethod.JET,
-        address: MOCK_ADDRESS
-    },
-    {
-        id: "ORD-987654",
-        userId: "current-user",
-        items: [
-            { ...MOCK_PRODUCTS[2], quantity: 1 }
-        ],
-        totalPrice: 185000,
-        date: "1402/11/20",
-        status: "delivered",
-        trackingCode: "8877665544",
-        shippingMethod: ShippingMethod.POST,
-        address: MOCK_ADDRESS
-    },
-    {
-        id: "ORD-456123",
-        userId: "current-user",
-        items: [
-            { ...MOCK_PRODUCTS[8], quantity: 1 },
-             { ...MOCK_PRODUCTS[10], quantity: 1 }
-        ],
-        totalPrice: 1540000,
-        date: "1402/12/15",
-        status: "pending",
-        shippingMethod: ShippingMethod.PICKUP,
-        address: MOCK_ADDRESS
-    }
-];
+// --- FIX: Defined OUTSIDE App component to prevent re-renders ---
+const CategoryShowcase = ({ 
+    title, 
+    products, 
+    icon: Icon, 
+    accentColor, 
+    gradientFrom, 
+    gradientTo, 
+    filterId,
+    onCategorySelect,
+    favorites,
+    onToggleFavorite,
+    addToCart,
+    setSelectedProduct,
+    cart,
+    updateQuantity,
+    reviews
+  }: { 
+    title: string, 
+    products: Product[], 
+    icon: any, 
+    accentColor: string, 
+    gradientFrom: string, 
+    gradientTo: string,
+    filterId: string,
+    onCategorySelect: (id: string) => void,
+    favorites: number[],
+    onToggleFavorite: (id: number) => void,
+    addToCart: (product: Product) => void,
+    setSelectedProduct: (product: Product) => void,
+    cart: CartItem[],
+    updateQuantity: (id: number, delta: number) => void,
+    reviews: Review[]
+  }) => (
+      <section className="mb-20">
+          <div className="bg-slate-800/40 backdrop-blur-md rounded-[2.5rem] border border-slate-700/50 overflow-hidden relative group">
+              {/* Background Accents */}
+              <div className={`absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br ${gradientFrom} to-transparent rounded-full blur-[80px] opacity-30`}></div>
+              <div className={`absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr ${gradientTo} to-transparent rounded-full blur-[80px] opacity-20`}></div>
+
+              <div className="flex flex-col lg:flex-row">
+                  {/* Header / Sidebar Area */}
+                  <div className="w-full lg:w-1/4 p-8 lg:p-10 flex flex-col justify-between relative z-10 border-b lg:border-b-0 lg:border-l border-slate-700/50">
+                      <div>
+                          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-2xl ${accentColor} text-white`}>
+                              <Icon className="w-8 h-8" />
+                          </div>
+                          <h3 className="text-3xl font-display font-bold text-white mb-3 leading-tight">
+                              {title}
+                          </h3>
+                          <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                              بهترین محصولات {title} با ضمانت اصالت و کیفیت، انتخاب شده توسط متخصصین.
+                          </p>
+                      </div>
+                      <button 
+                          onClick={() => onCategorySelect(filterId)}
+                          className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all hover:shadow-lg active:scale-95 bg-white/5 hover:bg-white/10 text-white border border-white/10`}
+                      >
+                          <span>مشاهده همه</span>
+                          <ChevronLeft className="w-5 h-5" />
+                      </button>
+                  </div>
+
+                  {/* Products Horizontal List */}
+                  <div className="w-full lg:w-3/4 p-6 lg:p-8">
+                      <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar snap-x">
+                          {products.slice(0, 4).map((product) => (
+                              <div key={product.id} className="min-w-[180px] md:min-w-[220px] snap-center">
+                                  <ProductCard 
+                                      product={product} 
+                                      isFavorite={favorites.includes(product.id)}
+                                      onToggleFavorite={() => onToggleFavorite(product.id)}
+                                      onAddToCart={addToCart}
+                                      onQuickView={(p) => setSelectedProduct(p)}
+                                      cartQuantity={cart.find(i => i.id === product.id)?.quantity || 0}
+                                      onUpdateQuantity={updateQuantity}
+                                      reviewCount={reviews.filter(r => r.productId === product.id).length}
+                                  />
+                              </div>
+                          ))}
+                          <div className="min-w-[100px] flex items-center justify-center snap-center">
+                              <button 
+                                  onClick={() => onCategorySelect(filterId)}
+                                  className="w-14 h-14 rounded-full bg-slate-700/50 hover:bg-pharmacy-500 hover:text-white text-slate-400 flex items-center justify-center transition-all border border-slate-600"
+                              >
+                                  <ArrowLeft className="w-6 h-6" />
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </section>
+  );
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -1025,11 +1025,19 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : MOCK_REVIEWS;
   });
 
-  // State for Orders (Mocked + Local Storage logic could be added)
   const [orders, setOrders] = useState<Order[]>(() => {
-      // For demo, we initialize with mock orders
       return generateMockOrders();
   });
+
+  // --- Ticket State ---
+  const [tickets, setTickets] = useState<Ticket[]>(() => {
+    const saved = localStorage.getItem('pharmacy_tickets');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('pharmacy_tickets', JSON.stringify(tickets));
+  }, [tickets]);
 
   const productSectionRef = useRef<HTMLDivElement>(null);
   
@@ -1043,7 +1051,6 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Ensure scroll to top on tab change or search trigger
   useEffect(() => {
     if (activeTab === 'products' || activeTab === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1075,10 +1082,9 @@ const App: React.FC = () => {
     localStorage.setItem('pharmacy_reviews', JSON.stringify(reviews));
   }, [reviews]);
 
-  // Request Notification Permission on Load (or ideally user interaction)
   useEffect(() => {
       if ('Notification' in window && Notification.permission === 'default') {
-          // We can't auto request, but we can check if it's available
+          // Check perms
       }
   }, []);
 
@@ -1088,7 +1094,7 @@ const App: React.FC = () => {
     if (Notification.permission === 'granted') {
       new Notification(title, {
         body,
-        icon: 'https://drshamimnasab.ir/wp-content/uploads/2023/06/logoshamimnasab2-2048x725.png', // Use logo from existing code
+        icon: 'https://drshamimnasab.ir/wp-content/uploads/2026/01/logoshamimnasab2_2048x725.png',
         dir: 'rtl'
       });
     } else if (Notification.permission !== 'denied') {
@@ -1096,7 +1102,7 @@ const App: React.FC = () => {
         if (permission === 'granted') {
           new Notification(title, {
              body,
-             icon: 'https://drshamimnasab.ir/wp-content/uploads/2023/06/logoshamimnasab2-2048x725.png',
+             icon: 'https://drshamimnasab.ir/wp-content/uploads/2026/01/logoshamimnasab2_2048x725.png',
              dir: 'rtl'
           });
         }
@@ -1195,6 +1201,52 @@ const App: React.FC = () => {
       }
   };
 
+  // --- Ticket Handler ---
+  const handleCreateTicket = (subject: string, message: string) => {
+    if (!currentUser) {
+        setIsAuthOpen(true);
+        return;
+    }
+
+    const newMessage: TicketMessage = {
+        text: message,
+        sender: 'user',
+        date: new Date().toLocaleDateString('fa-IR'),
+        time: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    const newTicket: Ticket = {
+        id: Date.now().toString(),
+        userId: currentUser.id,
+        subject: subject,
+        status: 'pending',
+        messages: [newMessage],
+        lastUpdate: new Date().toLocaleDateString('fa-IR')
+    };
+
+    setTickets(prev => [newTicket, ...prev]);
+
+    // Simulate Admin Response after 5 seconds
+    setTimeout(() => {
+        setTickets(currentTickets => currentTickets.map(t => {
+            if (t.id === newTicket.id) {
+                return {
+                    ...t,
+                    status: 'answered',
+                    messages: [...t.messages, {
+                        text: `سلام کاربر گرامی. درخواست مشاوره شما در زمینه ${subject} بررسی شد. لطفاً برای راهنمایی دقیق‌تر، جزئیات بیشتری ارسال کنید یا با شماره پشتیبانی تماس بگیرید.`,
+                        sender: 'support',
+                        date: new Date().toLocaleDateString('fa-IR'),
+                        time: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
+                    }]
+                };
+            }
+            return t;
+        }));
+        sendPushNotification('پاسخ مشاوره جدید', `پاسخ دکتر به سوال "${subject}" شما ثبت شد.`);
+    }, 5000);
+  };
+
   const scrollToProducts = () => {
     setActiveTab('products'); 
   };
@@ -1223,96 +1275,11 @@ const App: React.FC = () => {
       return 0;
   });
 
-  // --- New Section Logic for Home Page ---
   const medicalProducts = products.filter(p => p.category === "تجهیزات پزشکی");
   const cosmeticsProducts = products.filter(p => p.category === "محصولات آرایشی بهداشتی");
   const skinHairProducts = products.filter(p => p.category === "پوست و مو");
   const supplementProducts = products.filter(p => p.category.includes("مکمل"));
   const momBabyProducts = products.filter(p => p.category === "مادر و کودک");
-
-  const CategoryShowcase = ({ 
-    title, 
-    products, 
-    icon: Icon, 
-    accentColor, 
-    gradientFrom, 
-    gradientTo, 
-    filterId
-  }: { 
-    title: string, 
-    products: Product[], 
-    icon: any, 
-    accentColor: string, 
-    gradientFrom: string, 
-    gradientTo: string,
-    filterId: string
-  }) => (
-      <section className="mb-20">
-          <div className="bg-slate-800/40 backdrop-blur-md rounded-[2.5rem] border border-slate-700/50 overflow-hidden relative group">
-              {/* Background Accents */}
-              <div className={`absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br ${gradientFrom} to-transparent rounded-full blur-[80px] opacity-30`}></div>
-              <div className={`absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr ${gradientTo} to-transparent rounded-full blur-[80px] opacity-20`}></div>
-
-              <div className="flex flex-col lg:flex-row">
-                  {/* Header / Sidebar Area */}
-                  <div className="w-full lg:w-1/4 p-8 lg:p-10 flex flex-col justify-between relative z-10 border-b lg:border-b-0 lg:border-l border-slate-700/50">
-                      <div>
-                          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-2xl ${accentColor} text-white`}>
-                              <Icon className="w-8 h-8" />
-                          </div>
-                          <h3 className="text-3xl font-display font-bold text-white mb-3 leading-tight">
-                              {title}
-                          </h3>
-                          <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                              بهترین محصولات {title} با ضمانت اصالت و کیفیت، انتخاب شده توسط متخصصین.
-                          </p>
-                      </div>
-                      <button 
-                          onClick={() => {
-                              setSelectedCategory(filterId);
-                              setActiveTab('products');
-                          }}
-                          className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all hover:shadow-lg active:scale-95 bg-white/5 hover:bg-white/10 text-white border border-white/10`}
-                      >
-                          <span>مشاهده همه</span>
-                          <ChevronLeft className="w-5 h-5" />
-                      </button>
-                  </div>
-
-                  {/* Products Horizontal List */}
-                  <div className="w-full lg:w-3/4 p-6 lg:p-8">
-                      <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar snap-x">
-                          {products.slice(0, 4).map((product) => (
-                              <div key={product.id} className="min-w-[180px] md:min-w-[220px] snap-center">
-                                  <ProductCard 
-                                      product={product} 
-                                      isFavorite={favorites.includes(product.id)}
-                                      onToggleFavorite={() => toggleFavorite(product.id)}
-                                      onAddToCart={addToCart}
-                                      onQuickView={(p) => setSelectedProduct(p)}
-                                      cartQuantity={cart.find(i => i.id === product.id)?.quantity || 0}
-                                      onUpdateQuantity={updateQuantity}
-                                      reviewCount={reviews.filter(r => r.productId === product.id).length}
-                                  />
-                              </div>
-                          ))}
-                          <div className="min-w-[100px] flex items-center justify-center snap-center">
-                              <button 
-                                  onClick={() => {
-                                      setSelectedCategory(filterId);
-                                      setActiveTab('products');
-                                  }}
-                                  className="w-14 h-14 rounded-full bg-slate-700/50 hover:bg-pharmacy-500 hover:text-white text-slate-400 flex items-center justify-center transition-all border border-slate-600"
-                              >
-                                  <ArrowLeft className="w-6 h-6" />
-                              </button>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      </section>
-  );
 
   return (
     <div className="min-h-screen bg-slate-900 text-white font-sans selection:bg-pharmacy-500 selection:text-white pb-20 md:pb-0">
@@ -1359,7 +1326,7 @@ const App: React.FC = () => {
             setIsAuthOpen(true);
             setSelectedProduct(null);
           }}
-          relatedPost={MOCK_POSTS.find(post => post.relatedProductId === selectedProduct.id)}
+          relatedPost={MOCK_POSTS.find(post => post.relatedProductIds?.includes(selectedProduct.id))}
           onOpenArticle={(post) => {
               setSelectedProduct(null);
               setSelectedMagazinePost(post);
@@ -1373,7 +1340,6 @@ const App: React.FC = () => {
           <>
             <Hero 
               onExplore={() => {
-                   // Scroll to Search Box
                    const element = document.getElementById('ai-search-box');
                    element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
               }} 
@@ -1432,9 +1398,8 @@ const App: React.FC = () => {
                 <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base leading-relaxed">دسته‌بندی‌های منتخب و پرطرفدار داروخانه دکتر شمیم‌نسب</p>
               </div>
 
-              {/* --- NEW CATEGORY SHOWCASES --- */}
+              {/* --- NEW CATEGORY SHOWCASES (Using the external component) --- */}
               
-              {/* 1. Cosmetics */}
               <CategoryShowcase 
                   title="آرایشی و زیبایی" 
                   products={cosmeticsProducts}
@@ -1443,9 +1408,16 @@ const App: React.FC = () => {
                   gradientFrom="from-pink-500/40"
                   gradientTo="to-purple-500/40"
                   filterId="محصولات آرایشی بهداشتی"
+                  onCategorySelect={(id) => { setSelectedCategory(id); setActiveTab('products'); }}
+                  favorites={favorites}
+                  onToggleFavorite={toggleFavorite}
+                  addToCart={addToCart}
+                  setSelectedProduct={setSelectedProduct}
+                  cart={cart}
+                  updateQuantity={updateQuantity}
+                  reviews={reviews}
               />
 
-              {/* 2. Skin & Hair */}
               <CategoryShowcase 
                   title="مراقبت پوست و مو" 
                   products={skinHairProducts}
@@ -1454,9 +1426,16 @@ const App: React.FC = () => {
                   gradientFrom="from-pharmacy-500/40"
                   gradientTo="to-teal-500/40"
                   filterId="پوست و مو"
+                  onCategorySelect={(id) => { setSelectedCategory(id); setActiveTab('products'); }}
+                  favorites={favorites}
+                  onToggleFavorite={toggleFavorite}
+                  addToCart={addToCart}
+                  setSelectedProduct={setSelectedProduct}
+                  cart={cart}
+                  updateQuantity={updateQuantity}
+                  reviews={reviews}
               />
 
-              {/* 3. Supplements (Dietary & Sports) */}
               <CategoryShowcase 
                   title="مکمل‌های ورزشی و دارویی" 
                   products={supplementProducts}
@@ -1465,9 +1444,16 @@ const App: React.FC = () => {
                   gradientFrom="from-orange-500/40"
                   gradientTo="to-amber-500/40"
                   filterId="مکمل های ورزشی" 
+                  onCategorySelect={(id) => { setSelectedCategory(id); setActiveTab('products'); }}
+                  favorites={favorites}
+                  onToggleFavorite={toggleFavorite}
+                  addToCart={addToCart}
+                  setSelectedProduct={setSelectedProduct}
+                  cart={cart}
+                  updateQuantity={updateQuantity}
+                  reviews={reviews}
               />
 
-              {/* 4. Mom & Baby */}
               <CategoryShowcase 
                   title="مادر و کودک" 
                   products={momBabyProducts}
@@ -1476,9 +1462,16 @@ const App: React.FC = () => {
                   gradientFrom="from-sky-500/40"
                   gradientTo="to-indigo-500/40"
                   filterId="مادر و کودک"
+                  onCategorySelect={(id) => { setSelectedCategory(id); setActiveTab('products'); }}
+                  favorites={favorites}
+                  onToggleFavorite={toggleFavorite}
+                  addToCart={addToCart}
+                  setSelectedProduct={setSelectedProduct}
+                  cart={cart}
+                  updateQuantity={updateQuantity}
+                  reviews={reviews}
               />
               
-              {/* 5. See All Products Button (Updated Minimal Design) */}
               <div className="flex justify-center mt-20 mb-32">
                  <button 
                     onClick={() => {
@@ -1487,7 +1480,6 @@ const App: React.FC = () => {
                     }}
                     className="group relative px-8 py-4 bg-pharmacy-500 text-white rounded-full font-bold overflow-hidden shadow-lg hover:shadow-pharmacy-500/40 transition-all hover:-translate-y-1 active:scale-95"
                  >
-                    {/* Shine Effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                     
                     <div className="flex items-center gap-3 relative z-10">
@@ -1529,7 +1521,6 @@ const App: React.FC = () => {
                         )}
                     </div>
                     
-                    {/* --- Advanced Filters (Brand & Price) --- */}
                     <div className="flex flex-col md:flex-row gap-4 items-center">
                         {/* Brand Filter */}
                         <div className="relative flex-1 w-full">
@@ -1564,7 +1555,6 @@ const App: React.FC = () => {
                             </select>
                         </div>
 
-                        {/* Reset Filters Button - Shows only when filters are active */}
                         {(searchQuery !== "" || selectedCategory !== "همه محصولات" || selectedBrand !== "همه برندها" || sortOrder !== "default") && (
                             <button 
                                 onClick={resetFilters}
@@ -1577,15 +1567,14 @@ const App: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Categories Filter - Responsive Design */}
                     <div>
                         <div className="flex items-center gap-2 mb-4 text-slate-400 text-sm font-bold">
                            <SlidersHorizontal className="w-4 h-4" />
                            دسته‌بندی‌ها
                         </div>
                         
-                        {/* Mobile Friendly Horizontal Scrollable List with Large Touch Targets */}
-                        <div className="flex gap-4 overflow-x-auto pb-6 -mx-4 px-4 md:mx-0 md:px-0 no-scrollbar snap-x snap-mandatory">
+                        {/* Changed from flex/overflow-x-auto to Grid for full visibility */}
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3">
                             {CATEGORY_ITEMS.map((item) => {
                                 const Icon = item.icon;
                                 const isSelected = selectedCategory === item.id;
@@ -1593,18 +1582,18 @@ const App: React.FC = () => {
                                     <button 
                                         key={item.id} 
                                         onClick={() => setSelectedCategory(item.id)} 
-                                        className={`flex-shrink-0 snap-start flex flex-col items-center gap-3 min-w-[85px] md:min-w-0 md:w-auto p-2 rounded-2xl transition-all group ${
+                                        className={`flex flex-col items-center gap-2 p-2 rounded-2xl transition-all group ${
                                             isSelected ? 'scale-105' : 'opacity-70 hover:opacity-100'
                                         }`}
                                     >
-                                        <div className={`w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[1.5rem] flex items-center justify-center transition-all shadow-lg ${
+                                        <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center transition-all shadow-lg ${
                                             isSelected 
                                             ? 'bg-pharmacy-500 text-white shadow-pharmacy-500/30' 
                                             : 'bg-slate-800 border border-slate-700 text-slate-400 group-hover:border-slate-500'
                                         }`}>
-                                            <Icon className="w-7 h-7 md:w-8 md:h-8" />
+                                            <Icon className="w-6 h-6 md:w-8 md:h-8" />
                                         </div>
-                                        <span className={`text-xs md:text-sm font-bold text-center ${
+                                        <span className={`text-xs font-bold text-center ${
                                             isSelected ? 'text-pharmacy-400' : 'text-slate-400'
                                         }`}>
                                             {item.label}
@@ -1674,7 +1663,10 @@ const App: React.FC = () => {
         )}
 
         {activeTab === 'consultation' && (
-            <Consultation notify={sendPushNotification} />
+            <Consultation 
+                notify={sendPushNotification}
+                onCreateTicket={handleCreateTicket}
+            />
         )}
 
         {activeTab === 'profile' && currentUser && (
@@ -1696,6 +1688,7 @@ const App: React.FC = () => {
               onCancelOrder={handleCancelOrder}
               onUpdateOrderStatus={handleUpdateOrderStatus}
               onOpenProduct={(p) => setSelectedProduct(p)}
+              tickets={tickets.filter(t => t.userId === currentUser.id)}
             />
         )}
 
@@ -1730,7 +1723,6 @@ const App: React.FC = () => {
 
       {activeTab !== 'consultation' && <Footer />}
       
-      {/* Mobile Bottom Navigation Bar */}
       <MobileNav 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 

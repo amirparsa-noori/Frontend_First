@@ -44,30 +44,10 @@ const Magazine: React.FC<MagazineProps> = ({
   };
 
   if (selectedPost) {
-    const relatedProduct = selectedPost.relatedProductId 
-      ? products.find(p => p.id === selectedPost.relatedProductId) 
-      : null;
-
-    const getNumericPrice = (priceStr: string) => {
-        const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
-        const englishDigits = '0123456789';
-        let cleanStr = priceStr;
-        for (let i = 0; i < 10; i++) {
-          cleanStr = cleanStr.split(persianDigits[i]).join(englishDigits[i]);
-        }
-        return parseInt(cleanStr.replace(/[^0-9]/g, ''), 10) || 0;
-    };
-
-    let oldPrice = 0;
-    let quantity = 0;
-
-    if (relatedProduct) {
-        const numericPrice = getNumericPrice(relatedProduct.price);
-        oldPrice = Math.round(numericPrice / (1 - 15 / 100));
-        
-        const cartItem = cart.find((item: any) => item.id === relatedProduct.id);
-        quantity = cartItem ? cartItem.quantity : 0;
-    }
+    // Find all related products based on IDs
+    const relatedProducts = selectedPost.relatedProductIds 
+        ? products.filter(p => selectedPost.relatedProductIds?.includes(p.id))
+        : [];
 
     return (
       <div className="min-h-screen bg-slate-900 pt-24 pb-20">
@@ -125,89 +105,29 @@ const Magazine: React.FC<MagazineProps> = ({
                ))}
             </div>
 
-            {/* Related Product Card */}
-            {relatedProduct && (
-              <div className="mt-12">
+            {/* Related Products Grid */}
+            {relatedProducts.length > 0 && (
+              <div className="mt-12 pt-8 border-t border-slate-700">
                   <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                     <Bookmark className="text-pharmacy-500" />
-                    محصول مرتبط با این مقاله
+                    محصولات مرتبط
                   </h3>
                   
-                  <div 
-                    onClick={() => onOpenProduct(relatedProduct)}
-                    className="bg-slate-800 rounded-3xl overflow-hidden border border-slate-700 hover:border-pharmacy-500 transition-all cursor-pointer flex flex-col md:flex-row shadow-xl group"
-                  >
-                    {/* Image Section */}
-                    <div className="w-full md:w-1/3 bg-white p-6 relative flex items-center justify-center shrink-0 min-h-[250px] md:min-h-0">
-                         <img 
-                            src={relatedProduct.image} 
-                            alt={relatedProduct.name} 
-                            className="w-full h-full object-contain max-h-[200px] transition-transform duration-500 group-hover:scale-105" 
-                         />
-                         <div className="absolute top-4 right-4 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-md">
-                            ۱۵٪ تخفیف
-                         </div>
-                    </div>
-
-                    {/* Info Section */}
-                    <div className="p-6 md:p-8 flex flex-col justify-center w-full">
-                        <div className="flex items-center gap-1 mb-2">
-                             {[1, 2, 3, 4, 5].map((s) => (
-                                <Star key={s} className={`w-4 h-4 ${s <= 4 ? 'text-gold-500 fill-gold-500' : 'text-slate-600'}`} />
-                            ))}
-                            <span className="text-xs text-slate-500 mr-2">(۱۲ نظر)</span>
-                        </div>
-                        
-                        <h4 className="text-xl font-bold text-white mb-3 group-hover:text-pharmacy-400 transition-colors">
-                            {relatedProduct.name}
-                        </h4>
-                        
-                        <p className="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-2">
-                            {relatedProduct.description}
-                        </p>
-
-                        <div className="flex items-end justify-between mt-auto">
-                            <div className="flex flex-col">
-                                <span className="text-slate-500 text-sm line-through decoration-red-500/50 mb-1">
-                                    {oldPrice.toLocaleString('fa-IR')}
-                                </span>
-                                <span className="text-2xl font-bold text-white">
-                                    {relatedProduct.price}
-                                </span>
-                            </div>
-
-                            {quantity === 0 ? (
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onAddToCart(relatedProduct);
-                                    }}
-                                    className="bg-pharmacy-500 hover:bg-pharmacy-600 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-pharmacy-500/20 active:scale-95 flex items-center gap-2"
-                                >
-                                    <ShoppingCart className="w-5 h-5" />
-                                    <span>افزودن به سبد</span>
-                                </button>
-                            ) : (
-                                <div className="flex items-center gap-3 bg-slate-900 border border-slate-700 rounded-xl px-2 py-1.5 shadow-inner" onClick={(e) => e.stopPropagation()}>
-                                    <button 
-                                        onClick={() => onUpdateQuantity(relatedProduct.id, 1)}
-                                        className="p-2 bg-pharmacy-500 hover:bg-pharmacy-600 text-white rounded-lg transition-colors shadow-lg shadow-pharmacy-500/20"
-                                    >
-                                        <Plus className="w-5 h-5" />
-                                    </button>
-                                    <span className="text-white font-bold text-lg min-w-[24px] text-center font-sans">
-                                        {quantity.toLocaleString('fa-IR')}
-                                    </span>
-                                    <button 
-                                        onClick={() => onUpdateQuantity(relatedProduct.id, -1)}
-                                        className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                                    >
-                                        {quantity === 1 ? <Trash2 className="w-5 h-5 text-rose-500" /> : <Minus className="w-5 h-5" />}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                  {/* Using standard ProductCards in a responsive grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {relatedProducts.map(product => (
+                        <ProductCard 
+                            key={product.id}
+                            product={product}
+                            isFavorite={favorites.includes(product.id)}
+                            onToggleFavorite={() => onToggleFavorite(product.id)}
+                            onAddToCart={onAddToCart}
+                            onQuickView={onOpenProduct}
+                            cartQuantity={cart.find(i => i.id === product.id)?.quantity || 0}
+                            onUpdateQuantity={onUpdateQuantity}
+                            reviewCount={12} // Default or passed if available
+                        />
+                    ))}
                   </div>
               </div>
             )}

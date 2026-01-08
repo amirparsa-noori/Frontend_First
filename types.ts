@@ -55,7 +55,7 @@ export interface BlogPost {
   date: string;
   readTime: string;
   category: string;
-  relatedProductId?: number; // Links to a product
+  relatedProductIds?: number[]; // Changed to support multiple products
 }
 
 export interface User {
@@ -92,4 +92,20 @@ export interface Order {
   trackingCode?: string;
   shippingMethod: ShippingMethod;
   address: Address;
+}
+
+export interface TicketMessage {
+  text: string;
+  sender: 'user' | 'support';
+  date: string;
+  time: string;
+}
+
+export interface Ticket {
+  id: string;
+  userId: string;
+  subject: string;
+  status: 'pending' | 'answered' | 'closed';
+  messages: TicketMessage[];
+  lastUpdate: string;
 }

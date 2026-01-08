@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { User, Address, Review, Product, Order } from '../types';
-import { User as UserIcon, MapPin, Plus, LogOut, Phone, IdCard, Edit, Trash2, X, Save, MessageSquare, Star, Package, Clock, ShoppingBag, ChevronLeft, AlertCircle, CheckCircle, Truck, Send } from 'lucide-react';
+import { User, Address, Review, Product, Order, Ticket } from '../types';
+import { User as UserIcon, MapPin, Plus, LogOut, Phone, IdCard, Edit, Trash2, X, Save, MessageSquare, Star, Package, Clock, ShoppingBag, ChevronLeft, AlertCircle, CheckCircle, Truck, Send, Ticket as TicketIcon } from 'lucide-react';
 
 interface ProfileProps {
   user: User;
@@ -18,6 +18,7 @@ interface ProfileProps {
   onCancelOrder: (id: string) => void;
   onUpdateOrderStatus: (id: string, status: any) => void;
   onOpenProduct: (product: Product) => void;
+  tickets: Ticket[];
 }
 
 const toPersianDigits = (num: string | number) => {
@@ -38,12 +39,14 @@ const Profile: React.FC<ProfileProps> = ({
     orders,
     onCancelOrder,
     onUpdateOrderStatus,
-    onOpenProduct
+    onOpenProduct,
+    tickets
 }) => {
-  const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'reviews'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'reviews' | 'tickets'>('info');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   
   // Profile Form States
   const [firstName, setFirstName] = useState(user.firstName);
@@ -75,29 +78,30 @@ const Profile: React.FC<ProfileProps> = ({
           case 'shipped': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
           case 'delivered': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
           case 'cancelled': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
+          case 'answered': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+          case 'closed': return 'bg-slate-500/10 text-slate-500 border-slate-500/20';
           default: return 'bg-slate-500/10 text-slate-500 border-slate-500/20';
       }
   };
 
   const getStatusLabel = (status: string) => {
       switch(status) {
-          case 'pending': return 'در انتظار پرداخت';
+          case 'pending': return 'در انتظار پاسخ';
           case 'processing': return 'در حال پردازش';
           case 'shipped': return 'ارسال شده';
           case 'delivered': return 'تحویل شده';
           case 'cancelled': return 'لغو شده';
+          case 'answered': return 'پاسخ داده شده';
+          case 'closed': return 'بسته شده';
           default: return 'نامشخص';
       }
   };
 
   const TimelineStep = ({ title, date, active, completed, last }: any) => (
       <div className={`relative flex flex-row md:flex-col items-start md:items-center gap-4 md:gap-0 flex-1 ${!last ? 'pb-8 md:pb-0' : ''}`}>
-          {/* Connecting Line */}
           {!last && (
             <>
-                {/* Mobile Line: positioned relative to the icon (right side in RTL) */}
                 <div className={`absolute top-8 right-[15px] bottom-0 w-0.5 md:hidden ${completed ? 'bg-pharmacy-500' : 'bg-slate-700'}`}></div>
-                {/* Desktop Line */}
                 <div className={`hidden md:block absolute top-[15px] right-[50%] left-[-50%] h-0.5 ${completed ? 'bg-pharmacy-500' : 'bg-slate-700'}`}></div>
             </>
           )}
@@ -181,206 +185,139 @@ const Profile: React.FC<ProfileProps> = ({
         </div>
       )}
 
-      {/* Review Edit Modal */}
-      {editingReview && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-            <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-                <h3 className="text-xl font-display text-white">ویرایش نظر</h3>
-                <button onClick={() => setEditingReview(null)} className="text-slate-500 hover:text-white">
-                    <X />
-                </button>
-                </div>
-                <form onSubmit={handleUpdateReviewSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-slate-400 text-xs mb-2">امتیاز</label>
-                        <div className="flex gap-1 flex-row-reverse justify-end">
-                            {[5, 4, 3, 2, 1].map((star) => (
-                                <Star 
-                                    key={star}
-                                    onClick={() => setEditingReview({...editingReview, rating: star})}
-                                    className={`w-6 h-6 cursor-pointer transition-colors ${
-                                        star <= editingReview.rating ? 'text-gold-500 fill-gold-500' : 'text-slate-600'
-                                    }`}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-slate-400 text-xs mb-2">نظر شما</label>
-                        <textarea 
-                            value={editingReview.comment}
-                            onChange={(e) => setEditingReview({...editingReview, comment: e.target.value})}
-                            className="w-full h-32 bg-slate-800 border border-slate-700 rounded-2xl p-4 text-white outline-none focus:border-pharmacy-500"
-                            required
-                        />
-                    </div>
-                    <button 
-                        type="submit"
-                        className="w-full bg-pharmacy-500 hover:bg-pharmacy-600 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"
-                    >
-                        <Save className="w-5 h-5" />
-                        ثبت تغییرات
-                    </button>
-                </form>
-            </div>
-          </div>
-      )}
-
-      {/* Order Tracking Modal */}
-      {selectedOrder && (
+      {/* Ticket Detail Modal */}
+      {selectedTicket && (
           <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-              <div className="bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-[2rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+              <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-[2rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
                   <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900 sticky top-0 z-20">
                       <div>
-                          <h3 className="text-xl font-display font-bold text-white mb-1">پیگیری سفارش</h3>
-                          <span className="text-slate-400 text-sm">کد سفارش: {toPersianDigits(selectedOrder.id)}</span>
+                          <h3 className="text-lg md:text-xl font-display font-bold text-white mb-1">گفتگو: {selectedTicket.subject}</h3>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getStatusColor(selectedTicket.status)}`}>
+                              {getStatusLabel(selectedTicket.status)}
+                          </span>
                       </div>
-                      <button onClick={() => setSelectedOrder(null)} className="text-slate-500 hover:text-white p-2 hover:bg-slate-800 rounded-full transition-all">
+                      <button onClick={() => setSelectedTicket(null)} className="text-slate-500 hover:text-white p-2 hover:bg-slate-800 rounded-full transition-all">
                           <X className="w-6 h-6" />
                       </button>
                   </div>
-
-                  <div className="flex-grow overflow-y-auto custom-scrollbar p-6">
-                      {/* Tracking Timeline */}
-                      <div className="bg-slate-800/50 rounded-3xl p-6 md:p-8 mb-8 border border-slate-700/50">
-                           <div className="flex flex-col md:flex-row justify-between relative">
-                                <TimelineStep 
-                                    title="ثبت سفارش" 
-                                    date={selectedOrder.date} 
-                                    completed={true} 
-                                />
-                                <TimelineStep 
-                                    title="در حال پردازش" 
-                                    date={selectedOrder.status !== 'pending' ? '1402/12/11' : ''} 
-                                    active={selectedOrder.status === 'processing'} 
-                                    completed={['shipped', 'delivered'].includes(selectedOrder.status)} 
-                                />
-                                <TimelineStep 
-                                    title="تحویل به پست" 
-                                    date={selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered' ? '1402/12/12' : ''}
-                                    active={selectedOrder.status === 'shipped'} 
-                                    completed={selectedOrder.status === 'delivered'} 
-                                />
-                                <TimelineStep 
-                                    title="تحویل مشتری" 
-                                    date={selectedOrder.status === 'delivered' ? '1402/12/14' : ''}
-                                    active={false} 
-                                    completed={selectedOrder.status === 'delivered'} 
-                                    last={true}
-                                />
-                           </div>
-                           {selectedOrder.status === 'cancelled' && (
-                               <div className="mt-6 bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl flex items-center gap-3 text-rose-400">
-                                   <AlertCircle className="w-5 h-5" />
-                                   <span>این سفارش لغو شده است.</span>
-                               </div>
-                           )}
-                      </div>
-
-                      {/* Order Info Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                          <div className="bg-slate-800/30 p-5 rounded-2xl border border-slate-700/50">
-                              <h4 className="flex items-center gap-2 text-white font-bold mb-4">
-                                  <MapPin className="w-4 h-4 text-pharmacy-500" />
-                                  آدرس تحویل
-                              </h4>
-                              <p className="text-slate-300 text-sm leading-relaxed mb-2">{selectedOrder.address.fullAddress}</p>
-                              <span className="text-slate-500 text-xs block">کد پستی: {toPersianDigits(selectedOrder.address.postalCode)}</span>
-                          </div>
-                          
-                          <div className="bg-slate-800/30 p-5 rounded-2xl border border-slate-700/50">
-                               <h4 className="flex items-center gap-2 text-white font-bold mb-4">
-                                  <Truck className="w-4 h-4 text-pharmacy-500" />
-                                  اطلاعات ارسال
-                              </h4>
-                              <div className="flex justify-between items-center mb-3 text-sm">
-                                  <span className="text-slate-400">روش ارسال:</span>
-                                  <span className="text-white font-bold">
-                                      {selectedOrder.shippingMethod === 'jet' ? 'پیک فوری (Jet)' : selectedOrder.shippingMethod === 'post' ? 'پست پیشتاز' : 'تحویل حضوری'}
-                                  </span>
-                              </div>
-                              {selectedOrder.trackingCode && (
-                                  <div className="flex justify-between items-center text-sm bg-slate-900 p-2 rounded-lg border border-slate-700">
-                                      <span className="text-slate-400">کد رهگیری:</span>
-                                      <span className="text-pharmacy-400 font-mono tracking-wider">{toPersianDigits(selectedOrder.trackingCode)}</span>
-                                  </div>
-                              )}
-                          </div>
-                      </div>
-
-                      {/* Items List */}
-                      <h4 className="text-white font-bold mb-4 flex items-center gap-2">
-                          <ShoppingBag className="w-4 h-4 text-pharmacy-500" />
-                          اقلام سفارش
-                      </h4>
-                      <div className="space-y-3">
-                          {selectedOrder.items.map((item, idx) => {
-                              const product = products.find(p => p.id === item.id);
-                              return (
-                              <div 
-                                key={idx} 
-                                onClick={() => product && onOpenProduct(product)}
-                                className="flex items-center gap-4 bg-slate-800 p-3 rounded-2xl border border-slate-700/50 cursor-pointer hover:border-pharmacy-500 transition-colors group"
-                              >
-                                  <div className="w-16 h-16 bg-white rounded-xl p-1 shrink-0">
-                                      <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
-                                  </div>
-                                  <div className="flex-grow">
-                                      <h5 className="text-white font-bold text-sm mb-1 line-clamp-1 group-hover:text-pharmacy-400 transition-colors">{item.name}</h5>
-                                      <span className="text-slate-500 text-xs">{toPersianDigits(item.quantity)} عدد</span>
-                                  </div>
-                                  <div className="text-left">
-                                      <span className="text-pharmacy-400 font-bold text-sm block">{item.price}</span>
+                  
+                  <div className="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-900/50">
+                      {selectedTicket.messages.map((msg, index) => (
+                          <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`max-w-[85%] rounded-2xl p-4 ${
+                                  msg.sender === 'user' 
+                                  ? 'bg-pharmacy-600 text-white rounded-tr-none' 
+                                  : 'bg-slate-800 border border-slate-700 text-slate-200 rounded-tl-none'
+                              }`}>
+                                  <p className="text-sm leading-relaxed mb-2">{msg.text}</p>
+                                  <div className="text-[10px] opacity-70 flex justify-end gap-2">
+                                      <span>{toPersianDigits(msg.date)}</span>
+                                      <span>{toPersianDigits(msg.time)}</span>
                                   </div>
                               </div>
-                              );
-                          })}
-                      </div>
+                          </div>
+                      ))}
                   </div>
 
-                  {/* Modal Footer */}
-                  <div className="p-6 border-t border-slate-800 bg-slate-900 flex flex-col md:flex-row justify-between items-center gap-4">
-                      <div className="flex items-center gap-2 text-white font-bold">
-                          <span>مبلغ کل پرداختی:</span>
-                          <span className="text-xl text-pharmacy-400">{toPersianDigits(selectedOrder.totalPrice.toLocaleString())} تومان</span>
-                      </div>
-                      
-                      <div className="flex gap-2 w-full md:w-auto">
-                        {/* Simulation Button for Demo Purposes */}
-                        {selectedOrder.status === 'processing' && (
-                            <button 
-                                onClick={() => {
-                                    onUpdateOrderStatus(selectedOrder.id, 'shipped');
-                                    setSelectedOrder({ ...selectedOrder, status: 'shipped' });
-                                }}
-                                className="w-full md:w-auto px-6 py-3 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white border border-indigo-500/20 transition-all font-bold flex items-center justify-center gap-2 text-sm"
-                            >
-                                <Send className="w-4 h-4" />
-                                شبیه‌سازی: ارسال سفارش
-                            </button>
-                        )}
-
-                        {(selectedOrder.status === 'pending' || selectedOrder.status === 'processing') && (
-                            <button 
-                                onClick={() => {
-                                    if (window.confirm('آیا از لغو این سفارش اطمینان دارید؟')) {
-                                        onCancelOrder(selectedOrder.id);
-                                        setSelectedOrder({ ...selectedOrder, status: 'cancelled' });
-                                    }
-                                }}
-                                className="w-full md:w-auto px-6 py-3 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white border border-rose-500/20 transition-all font-bold flex items-center justify-center gap-2 text-sm"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                                لغو سفارش
-                            </button>
-                        )}
-                      </div>
+                  <div className="p-4 border-t border-slate-800 bg-slate-900 text-center">
+                      <p className="text-slate-500 text-xs">برای ارسال پیام جدید، لطفا تیکت جدید ثبت کنید.</p>
                   </div>
               </div>
           </div>
       )}
 
+      {/* --- ADDED ORDER DETAIL MODAL --- */}
+      {selectedOrder && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+           <div className="bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+              {/* Header */}
+              <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900 sticky top-0 z-20">
+                 <div>
+                    <h3 className="text-xl font-bold text-white mb-1">جزئیات سفارش</h3>
+                    <span className="text-sm text-slate-400">شماره سفارش: {toPersianDigits(selectedOrder.id)}</span>
+                 </div>
+                 <button onClick={() => setSelectedOrder(null)} className="text-slate-500 hover:text-white p-2 hover:bg-slate-800 rounded-full transition-all">
+                    <X className="w-6 h-6" />
+                 </button>
+              </div>
+
+              {/* Body */}
+              <div className="overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                 {/* Status Timeline */}
+                 <div className="flex flex-col md:flex-row justify-between relative px-2 md:px-10">
+                    <TimelineStep title="ثبت سفارش" date={selectedOrder.date} active={false} completed={true} />
+                    <TimelineStep title="پردازش" date={null} active={selectedOrder.status === 'processing'} completed={['shipped', 'delivered'].includes(selectedOrder.status)} />
+                    <TimelineStep title="ارسال شده" date={null} active={selectedOrder.status === 'shipped'} completed={selectedOrder.status === 'delivered'} />
+                    <TimelineStep title="تحویل شده" date={null} active={false} completed={selectedOrder.status === 'delivered'} last={true} />
+                 </div>
+
+                 {/* Tracking Code */}
+                 {selectedOrder.trackingCode && (
+                    <div className="bg-slate-800 rounded-2xl p-4 flex items-center justify-between border border-slate-700">
+                       <span className="text-slate-400 text-sm">کد پیگیری پستی:</span>
+                       <span className="text-white font-mono tracking-widest">{toPersianDigits(selectedOrder.trackingCode)}</span>
+                    </div>
+                 )}
+
+                 {/* Address Info */}
+                 <div>
+                    <h4 className="text-white font-bold mb-3 flex items-center gap-2 text-sm">
+                       <MapPin className="w-4 h-4 text-pharmacy-500" />
+                       آدرس تحویل گیرنده
+                    </h4>
+                    <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50 text-sm text-slate-300 leading-relaxed">
+                       {selectedOrder.address.fullAddress}
+                       <div className="mt-2 text-slate-500">کد پستی: {toPersianDigits(selectedOrder.address.postalCode)}</div>
+                    </div>
+                 </div>
+
+                 {/* Items List */}
+                 <div>
+                    <h4 className="text-white font-bold mb-3 flex items-center gap-2 text-sm">
+                       <ShoppingBag className="w-4 h-4 text-pharmacy-500" />
+                       اقلام سفارش
+                    </h4>
+                    <div className="space-y-3">
+                       {selectedOrder.items.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-4 bg-slate-800/50 p-3 rounded-2xl border border-slate-700/50">
+                             <div className="w-16 h-16 bg-white rounded-xl p-1 shrink-0">
+                                <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
+                             </div>
+                             <div className="flex-grow">
+                                <h5 className="text-white font-bold text-sm line-clamp-1">{item.name}</h5>
+                                <div className="flex justify-between mt-2">
+                                   <span className="text-slate-500 text-xs">{toPersianDigits(item.quantity)} عدد</span>
+                                   <span className="text-pharmacy-400 text-xs font-bold">{item.price}</span>
+                                </div>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="p-6 border-t border-slate-800 bg-slate-900 flex flex-col md:flex-row gap-4">
+                 {selectedOrder.status === 'pending' && (
+                    <button 
+                      onClick={() => {
+                          onCancelOrder(selectedOrder.id);
+                          setSelectedOrder(null);
+                      }}
+                      className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 font-bold py-3 rounded-xl transition-all"
+                    >
+                       لغو سفارش
+                    </button>
+                 )}
+                 <button className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-all">
+                    دریافت فاکتور
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Main Profile Card */}
       <div className="bg-slate-800/50 border border-slate-800 rounded-3xl p-8 backdrop-blur-md shadow-2xl">
         <div className="flex flex-col md:flex-row items-center gap-8 mb-8 pb-8 border-b border-slate-800">
           <div className="w-24 h-24 bg-pharmacy-600 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-xl shadow-pharmacy-600/20">
@@ -411,26 +348,34 @@ const Profile: React.FC<ProfileProps> = ({
           </button>
         </div>
 
-        {/* Profile Tabs - Optimized for Mobile Grid */}
-        <div className="grid grid-cols-3 gap-2 mb-6 border-b border-slate-700/50 pb-1">
+        {/* Profile Tabs */}
+        <div className="grid grid-cols-4 gap-2 mb-6 border-b border-slate-700/50 pb-1 overflow-x-auto">
             <button 
                 onClick={() => setActiveTab('info')}
-                className={`pb-3 px-1 text-[10px] md:text-sm font-bold transition-all relative flex items-center justify-center ${activeTab === 'info' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
+                className={`pb-3 px-1 text-[10px] md:text-sm font-bold transition-all relative flex items-center justify-center whitespace-nowrap ${activeTab === 'info' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
             >
                 اطلاعات
                 {activeTab === 'info' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-pharmacy-500 rounded-t-full"></span>}
             </button>
             <button 
                 onClick={() => setActiveTab('orders')}
-                className={`pb-3 px-1 text-[10px] md:text-sm font-bold transition-all relative flex items-center justify-center gap-1 md:gap-2 ${activeTab === 'orders' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
+                className={`pb-3 px-1 text-[10px] md:text-sm font-bold transition-all relative flex items-center justify-center gap-1 md:gap-2 whitespace-nowrap ${activeTab === 'orders' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
             >
                 سفارش‌ها
                 <span className="bg-slate-700 text-white text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full">{toPersianDigits(orders.length)}</span>
                 {activeTab === 'orders' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-pharmacy-500 rounded-t-full"></span>}
             </button>
             <button 
+                onClick={() => setActiveTab('tickets')}
+                className={`pb-3 px-1 text-[10px] md:text-sm font-bold transition-all relative flex items-center justify-center gap-1 md:gap-2 whitespace-nowrap ${activeTab === 'tickets' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
+            >
+                مشاوره‌ها
+                <span className="bg-slate-700 text-white text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full">{toPersianDigits(tickets.length)}</span>
+                {activeTab === 'tickets' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-pharmacy-500 rounded-t-full"></span>}
+            </button>
+            <button 
                 onClick={() => setActiveTab('reviews')}
-                className={`pb-3 px-1 text-[10px] md:text-sm font-bold transition-all relative flex items-center justify-center gap-1 md:gap-2 ${activeTab === 'reviews' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
+                className={`pb-3 px-1 text-[10px] md:text-sm font-bold transition-all relative flex items-center justify-center gap-1 md:gap-2 whitespace-nowrap ${activeTab === 'reviews' ? 'text-pharmacy-500' : 'text-slate-400 hover:text-white'}`}
             >
                 نظرات
                 <span className="bg-slate-700 text-white text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full">{toPersianDigits(userReviews.length)}</span>
@@ -438,6 +383,7 @@ const Profile: React.FC<ProfileProps> = ({
             </button>
         </div>
 
+        {/* INFO TAB */}
         {activeTab === 'info' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-left-4">
             <div className="flex items-center justify-between">
@@ -490,12 +436,13 @@ const Profile: React.FC<ProfileProps> = ({
             </div>
         )}
 
-        {/* --- ORDERS TAB CONTENT --- */}
+        {/* ORDERS TAB */}
         {activeTab === 'orders' && (
             <div className="space-y-4 animate-in fade-in slide-in-from-left-4">
                 {orders.length > 0 ? (
                     orders.map((order) => (
                         <div key={order.id} className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4 md:p-6 transition-all hover:border-slate-600 group">
+                            {/* Order content same as before... */}
                             <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
                                 <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-right w-full md:w-auto">
                                     <div className="bg-slate-800 p-3 rounded-2xl shrink-0">
@@ -523,8 +470,6 @@ const Profile: React.FC<ProfileProps> = ({
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Order Items Preview */}
                             <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar mb-4 justify-center md:justify-start">
                                 {order.items.map((item, idx) => (
                                     <div key={idx} className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-xl p-1 shrink-0 border border-slate-700">
@@ -532,7 +477,6 @@ const Profile: React.FC<ProfileProps> = ({
                                     </div>
                                 ))}
                             </div>
-
                             <div className="flex gap-3 pt-4 border-t border-slate-800">
                                 <button 
                                     onClick={() => setSelectedOrder(order)}
@@ -540,19 +484,6 @@ const Profile: React.FC<ProfileProps> = ({
                                 >
                                     مشاهده جزئیات و پیگیری
                                 </button>
-                                {(order.status === 'pending' || order.status === 'processing') && (
-                                    <button 
-                                        onClick={() => {
-                                            if (window.confirm('آیا از لغو این سفارش اطمینان دارید؟')) {
-                                                onCancelOrder(order.id);
-                                            }
-                                        }}
-                                        className="px-4 py-3 rounded-xl bg-slate-800 text-rose-500 hover:bg-rose-500 hover:text-white border border-slate-700 hover:border-rose-500 transition-all"
-                                        title="لغو سفارش"
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
-                                )}
                             </div>
                         </div>
                     ))
@@ -566,6 +497,62 @@ const Profile: React.FC<ProfileProps> = ({
             </div>
         )}
 
+        {/* TICKETS TAB (NEW) */}
+        {activeTab === 'tickets' && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-left-4">
+                {tickets.length > 0 ? (
+                    tickets.map(ticket => (
+                        <div key={ticket.id} className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4 md:p-6 transition-all hover:border-slate-500">
+                            {/* Header Section: Aligned like Orders */}
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+                                <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-right w-full md:w-auto">
+                                    <div className="bg-slate-800 p-3 rounded-2xl shrink-0">
+                                        <TicketIcon className="w-6 h-6 text-pharmacy-500" />
+                                    </div>
+                                    <div className="flex flex-col items-center md:items-start">
+                                        <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 mb-1">
+                                            <h4 className="font-bold text-white text-lg">{ticket.subject}</h4>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getStatusColor(ticket.status)}`}>
+                                                {getStatusLabel(ticket.status)}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-xs text-slate-500">
+                                            <span>کد پیگیری: {toPersianDigits(ticket.id.slice(-6))}</span>
+                                            <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
+                                            <span>{toPersianDigits(ticket.lastUpdate)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Message Preview */}
+                            <div className="bg-slate-800 rounded-xl p-4 mb-4 text-sm text-slate-300 line-clamp-2 leading-relaxed text-center md:text-right">
+                                {ticket.messages[0].text}
+                            </div>
+
+                            {/* Action Button */}
+                            <div className="flex gap-3 pt-4 border-t border-slate-800">
+                                <button 
+                                    onClick={() => setSelectedTicket(ticket)}
+                                    className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-all border border-slate-700 hover:border-pharmacy-500 active:scale-95 text-sm flex items-center justify-center gap-2"
+                                >
+                                    <MessageSquare className="w-4 h-4" />
+                                    مشاهده گفتگو
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="py-16 text-center border-2 border-dashed border-slate-700 rounded-3xl">
+                        <TicketIcon className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                        <h3 className="text-white font-bold text-lg mb-2">تیکت مشاوره‌ای ندارید</h3>
+                        <p className="text-slate-500 text-sm">شما می‌توانید از بخش "مشاوره تخصصی" سوالات خود را مطرح کنید.</p>
+                    </div>
+                )}
+            </div>
+        )}
+
+        {/* REVIEWS TAB */}
         {activeTab === 'reviews' && (
              <div className="space-y-4 animate-in fade-in slide-in-from-left-4">
                  {userReviews.length > 0 ? (

@@ -19,9 +19,10 @@ const TOPICS = [
 
 interface ConsultationProps {
     notify?: (title: string, body: string) => void;
+    onCreateTicket: (subject: string, message: string) => void;
 }
 
-const Consultation: React.FC<ConsultationProps> = ({ notify }) => {
+const Consultation: React.FC<ConsultationProps> = ({ notify, onCreateTicket }) => {
   const [selectedTopic, setSelectedTopic] = useState<{id: string, title: string, color: string} | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -51,7 +52,7 @@ const Consultation: React.FC<ConsultationProps> = ({ notify }) => {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !selectedTopic) return;
 
     // Request permission on first user interaction if passed
     if (Notification.permission === 'default') {
@@ -66,20 +67,24 @@ const Consultation: React.FC<ConsultationProps> = ({ notify }) => {
     };
 
     setMessages(prev => [...prev, newUserMessage]);
+    
+    // Create Ticket in Global State
+    onCreateTicket(selectedTopic.title, inputText);
+
     setInputText('');
 
-    // Simulated Bot Response
+    // Simulated Bot Response (UI Only - actual logic is in App.tsx for persistence)
     setTimeout(() => {
       const botResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: `درخواست شما در زمینه ${selectedTopic?.title} ثبت شد. دکتر متخصص ما به زودی پاسخ دقیق‌تری برای شما ارسال خواهد کرد.`,
+        text: `درخواست شما در سیستم تیکتینگ ثبت شد. دکتر متخصص ما به زودی پاسخ دقیق‌تری برای شما ارسال خواهد کرد که در پروفایل کاربری شما قابل مشاهده است.`,
         sender: 'bot',
         time: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, botResponse]);
       
       if (notify) {
-          notify('پیام جدید از مشاور', `پاسخ به سوال ${selectedTopic?.title} دریافت شد.`);
+          notify('تیکت مشاوره ثبت شد', `سوال شما در بخش ${selectedTopic?.title} برای پزشک ارسال شد.`);
       }
     }, 1500);
   };
