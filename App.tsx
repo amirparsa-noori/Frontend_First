@@ -850,7 +850,7 @@ const MOCK_POSTS: BlogPost[] = [
     id: '8',
     title: 'راز پاکسازی دو مرحله‌ای پوست با میسلار واتر',
     excerpt: 'چرا شستن صورت با آب و صابون کافی نیست؟ اهمیت استفاده از میسلار واتر قبل از شوینده.',
-    content: `آلاینده‌های هوا، ضدآفتاب و مواد آرایشی اغلب با شوینده‌های معمولی به طور کامل پاک نمی‌شوند و در منافذ باقی می‌مانند. این موضوع به مرور باعث کدری پوست و ایجاد جوش می‌شود.
+    content: `آلاینده‌های هوا، ضدآفتاب و مواد آرایشی اغلب با شوینده‌های معمولی به طور کامل پاک نمی‌شوند و در منافذ باقی می‌مانند. این موضوع به مرور باعث کدری پوست و ایجاد جوش شود.
     
     میسلار واتر گارنیر حاوی ذرات میسل است که مانند آهنربا آلودگی‌ها و چربی‌ها را به خود جذب می‌کند. استفاده از این محصول به عنوان مرحله اول پاکسازی (Double Cleansing)، پوست را کاملاً تمیز کرده و آماده جذب سرم‌ها و کرم‌ها می‌کند.
     
@@ -933,7 +933,6 @@ const CATEGORY_ITEMS = [
   { id: "مکمل های غذایی دارویی", label: "مکمل غذایی", icon: Pill },
   { id: "مکمل های ورزشی", label: "مکمل ورزشی", icon: Dumbbell },
   { id: "مادر و کودک", label: "مادر و کودک", icon: Baby },
-  { id: "تجهیزات پزشکی", label: "تجهیزات پزشکی", icon: Stethoscope },
 ];
 
 const BRANDS = ["Lafarrerr", "Prime", "Cerita", "The Ordinary", "Simple", "Kalleh", "Aptamil", "My Baby", "Paksaman", "Cinere", "Seagull", "Callista", "Beurer", "Berry", "Xiaomi"];
@@ -1076,6 +1075,35 @@ const App: React.FC = () => {
     localStorage.setItem('pharmacy_reviews', JSON.stringify(reviews));
   }, [reviews]);
 
+  // Request Notification Permission on Load (or ideally user interaction)
+  useEffect(() => {
+      if ('Notification' in window && Notification.permission === 'default') {
+          // We can't auto request, but we can check if it's available
+      }
+  }, []);
+
+  const sendPushNotification = (title: string, body: string) => {
+    if (!('Notification' in window)) return;
+
+    if (Notification.permission === 'granted') {
+      new Notification(title, {
+        body,
+        icon: 'https://drshamimnasab.ir/wp-content/uploads/2023/06/logoshamimnasab2-2048x725.png', // Use logo from existing code
+        dir: 'rtl'
+      });
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          new Notification(title, {
+             body,
+             icon: 'https://drshamimnasab.ir/wp-content/uploads/2023/06/logoshamimnasab2-2048x725.png',
+             dir: 'rtl'
+          });
+        }
+      });
+    }
+  };
+
   const addToCart = (product: Product) => {
     setCart(prev => {
       const existingItem = prev.find(item => item.id === product.id);
@@ -1148,6 +1176,23 @@ const App: React.FC = () => {
           ? { ...order, status: 'cancelled' } 
           : order
       ));
+      sendPushNotification('سفارش لغو شد', `سفارش شماره ${orderId} با موفقیت لغو گردید.`);
+  };
+
+  const handleUpdateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
+      setOrders(prev => prev.map(order => 
+          order.id === orderId 
+          ? { ...order, status: newStatus } 
+          : order
+      ));
+      
+      let message = "";
+      if (newStatus === 'shipped') message = `سفارش شماره ${orderId} به پست تحویل داده شد.`;
+      if (newStatus === 'delivered') message = `سفارش شماره ${orderId} تحویل داده شد.`;
+      
+      if (message) {
+          sendPushNotification('وضعیت سفارش تغییر کرد', message);
+      }
   };
 
   const scrollToProducts = () => {
@@ -1238,7 +1283,7 @@ const App: React.FC = () => {
                   <div className="w-full lg:w-3/4 p-6 lg:p-8">
                       <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar snap-x">
                           {products.slice(0, 4).map((product) => (
-                              <div key={product.id} className="min-w-[260px] md:min-w-[280px] snap-center">
+                              <div key={product.id} className="min-w-[180px] md:min-w-[220px] snap-center">
                                   <ProductCard 
                                       product={product} 
                                       isFavorite={favorites.includes(product.id)}
@@ -1629,7 +1674,7 @@ const App: React.FC = () => {
         )}
 
         {activeTab === 'consultation' && (
-            <Consultation />
+            <Consultation notify={sendPushNotification} />
         )}
 
         {activeTab === 'profile' && currentUser && (
@@ -1649,6 +1694,7 @@ const App: React.FC = () => {
               onDeleteReview={handleDeleteReview}
               orders={orders}
               onCancelOrder={handleCancelOrder}
+              onUpdateOrderStatus={handleUpdateOrderStatus}
               onOpenProduct={(p) => setSelectedProduct(p)}
             />
         )}
@@ -1673,6 +1719,7 @@ const App: React.FC = () => {
                 setOrders(prev => [newOrder, ...prev]);
                 setCart([]);
                 setActiveTab('profile'); // Redirect to profile to see the new order
+                sendPushNotification('سفارش ثبت شد', 'سفارش شما با موفقیت ثبت گردید و در حال پردازش است.');
                 alert('سفارش شما با موفقیت ثبت شد!');
             }}
             onCancel={() => setActiveTab('cart')}

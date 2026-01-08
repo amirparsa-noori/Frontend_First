@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Address, Review, Product, Order } from '../types';
-import { User as UserIcon, MapPin, Plus, LogOut, Phone, IdCard, Edit, Trash2, X, Save, MessageSquare, Star, Package, Clock, ShoppingBag, ChevronLeft, AlertCircle, CheckCircle, Truck } from 'lucide-react';
+import { User as UserIcon, MapPin, Plus, LogOut, Phone, IdCard, Edit, Trash2, X, Save, MessageSquare, Star, Package, Clock, ShoppingBag, ChevronLeft, AlertCircle, CheckCircle, Truck, Send } from 'lucide-react';
 
 interface ProfileProps {
   user: User;
@@ -16,6 +16,7 @@ interface ProfileProps {
   onDeleteReview: (id: string) => void;
   orders: Order[];
   onCancelOrder: (id: string) => void;
+  onUpdateOrderStatus: (id: string, status: any) => void;
   onOpenProduct: (product: Product) => void;
 }
 
@@ -36,6 +37,7 @@ const Profile: React.FC<ProfileProps> = ({
     onDeleteReview,
     orders,
     onCancelOrder,
+    onUpdateOrderStatus,
     onOpenProduct
 }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'reviews'>('info');
@@ -344,20 +346,36 @@ const Profile: React.FC<ProfileProps> = ({
                           <span className="text-xl text-pharmacy-400">{toPersianDigits(selectedOrder.totalPrice.toLocaleString())} تومان</span>
                       </div>
                       
-                      {(selectedOrder.status === 'pending' || selectedOrder.status === 'processing') && (
-                          <button 
-                            onClick={() => {
-                                if (window.confirm('آیا از لغو این سفارش اطمینان دارید؟')) {
-                                    onCancelOrder(selectedOrder.id);
-                                    setSelectedOrder({ ...selectedOrder, status: 'cancelled' });
-                                }
-                            }}
-                            className="w-full md:w-auto px-6 py-3 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white border border-rose-500/20 transition-all font-bold flex items-center justify-center gap-2"
-                          >
-                              <Trash2 className="w-5 h-5" />
-                              لغو سفارش
-                          </button>
-                      )}
+                      <div className="flex gap-2 w-full md:w-auto">
+                        {/* Simulation Button for Demo Purposes */}
+                        {selectedOrder.status === 'processing' && (
+                            <button 
+                                onClick={() => {
+                                    onUpdateOrderStatus(selectedOrder.id, 'shipped');
+                                    setSelectedOrder({ ...selectedOrder, status: 'shipped' });
+                                }}
+                                className="w-full md:w-auto px-6 py-3 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white border border-indigo-500/20 transition-all font-bold flex items-center justify-center gap-2 text-sm"
+                            >
+                                <Send className="w-4 h-4" />
+                                شبیه‌سازی: ارسال سفارش
+                            </button>
+                        )}
+
+                        {(selectedOrder.status === 'pending' || selectedOrder.status === 'processing') && (
+                            <button 
+                                onClick={() => {
+                                    if (window.confirm('آیا از لغو این سفارش اطمینان دارید؟')) {
+                                        onCancelOrder(selectedOrder.id);
+                                        setSelectedOrder({ ...selectedOrder, status: 'cancelled' });
+                                    }
+                                }}
+                                className="w-full md:w-auto px-6 py-3 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white border border-rose-500/20 transition-all font-bold flex items-center justify-center gap-2 text-sm"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                لغو سفارش
+                            </button>
+                        )}
+                      </div>
                   </div>
               </div>
           </div>

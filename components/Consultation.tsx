@@ -17,7 +17,11 @@ const TOPICS = [
   { id: 'baby', title: 'مادر و کودک', icon: Baby, desc: 'تغذیه نوزاد، شیرخشک و مراقبت‌های مادرانه', color: 'bg-purple-500' },
 ];
 
-const Consultation: React.FC = () => {
+interface ConsultationProps {
+    notify?: (title: string, body: string) => void;
+}
+
+const Consultation: React.FC<ConsultationProps> = ({ notify }) => {
   const [selectedTopic, setSelectedTopic] = useState<{id: string, title: string, color: string} | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -49,6 +53,11 @@ const Consultation: React.FC = () => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
+    // Request permission on first user interaction if passed
+    if (Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+
     const newUserMessage: Message = {
       id: Date.now().toString(),
       text: inputText,
@@ -68,6 +77,10 @@ const Consultation: React.FC = () => {
         time: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, botResponse]);
+      
+      if (notify) {
+          notify('پیام جدید از مشاور', `پاسخ به سوال ${selectedTopic?.title} دریافت شد.`);
+      }
     }, 1500);
   };
 

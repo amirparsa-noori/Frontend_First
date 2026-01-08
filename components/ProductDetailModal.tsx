@@ -203,7 +203,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             <div className="p-2 bg-pharmacy-500/20 rounded-lg text-pharmacy-400 group-hover:text-pharmacy-300">
                                 <FileText className="w-5 h-5" />
                             </div>
-                            <span className="font-bold text-white text-sm md:text-base">مشخصات فنی و تخصصی دارو</span>
+                            {/* Updated Text Below */}
+                            <span className="font-bold text-white text-sm md:text-base">مشخصات فنی و تخصصی</span>
                         </div>
                         <ChevronLeft className="w-5 h-5 text-slate-500 group-hover:-translate-x-1 transition-transform" />
                     </button>
@@ -416,29 +417,33 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
                   {/* Bottom Section: Usage, Warning, Storage */}
                   <div className="space-y-6">
-                      <div className="bg-slate-800/30 p-5 rounded-2xl border border-slate-700">
-                          <h4 className="flex items-center gap-2 text-white font-bold mb-3">
-                              <Info className="w-5 h-5 text-blue-500" />
-                              روش مصرف
-                          </h4>
-                          <p className="text-slate-300 text-sm leading-relaxed text-justify">{product.details.usage}</p>
+                      <div className="bg-slate-800/30 border border-slate-700 rounded-2xl p-5 flex items-start gap-4">
+                          <div className="bg-blue-500/20 p-2 rounded-xl text-blue-400 shrink-0">
+                              <Info className="w-6 h-6" />
+                          </div>
+                          <div>
+                              <h4 className="font-bold text-white mb-2">روش مصرف</h4>
+                              <p className="text-slate-300 text-sm leading-relaxed">{product.details.usage}</p>
+                          </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="bg-rose-500/10 p-5 rounded-2xl border border-rose-500/20">
-                              <h4 className="flex items-center gap-2 text-rose-400 font-bold mb-3">
-                                  <AlertTriangle className="w-5 h-5" />
-                                  هشدار مصرف
-                              </h4>
-                              <p className="text-slate-300 text-sm leading-relaxed text-justify">{product.details.warnings}</p>
+                      <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-5 flex items-start gap-4">
+                          <div className="bg-rose-500/20 p-2 rounded-xl text-rose-400 shrink-0">
+                              <AlertTriangle className="w-6 h-6" />
                           </div>
-                          
-                          <div className="bg-amber-500/10 p-5 rounded-2xl border border-amber-500/20">
-                              <h4 className="flex items-center gap-2 text-amber-400 font-bold mb-3">
-                                  <Thermometer className="w-5 h-5" />
-                                  شرایط نگهداری
-                              </h4>
-                              <p className="text-slate-300 text-sm leading-relaxed text-justify">{product.details.storage}</p>
+                          <div>
+                              <h4 className="font-bold text-white mb-2">هشدار مصرف</h4>
+                              <p className="text-slate-300 text-sm leading-relaxed">{product.details.warnings}</p>
+                          </div>
+                      </div>
+
+                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5 flex items-start gap-4">
+                          <div className="bg-amber-500/20 p-2 rounded-xl text-amber-400 shrink-0">
+                              <Thermometer className="w-6 h-6" />
+                          </div>
+                          <div>
+                              <h4 className="font-bold text-white mb-2">شرایط نگهداری</h4>
+                              <p className="text-slate-300 text-sm leading-relaxed">{product.details.storage}</p>
                           </div>
                       </div>
                   </div>
