@@ -31,16 +31,24 @@ const Magazine: React.FC<MagazineProps> = ({
 }) => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(initialPost || null);
 
-  // Sync initialPost if it changes (rare, but good for robust deep linking)
+  // Sync initialPost if it changes
   useEffect(() => {
     if (initialPost) {
         setSelectedPost(initialPost);
     }
   }, [initialPost]);
 
+  // Scroll to top when post opens
+  useEffect(() => {
+    if (selectedPost) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [selectedPost]);
+
   const handleCloseArticle = () => {
       setSelectedPost(null);
       if (onClearInitialPost) onClearInitialPost();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (selectedPost) {

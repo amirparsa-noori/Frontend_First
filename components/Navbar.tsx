@@ -79,9 +79,10 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, cartCount, cur
             {/* Mobile Mag Button */}
             <button 
                 onClick={() => setActiveTab('mag')}
-                className={`md:hidden p-2 rounded-xl border transition-all ${activeTab === 'mag' ? 'bg-pharmacy-500 text-white border-pharmacy-500' : 'border-slate-700 text-slate-300'}`}
+                className={`md:hidden px-3 py-2 rounded-xl border transition-all flex items-center gap-2 ${activeTab === 'mag' ? 'bg-pharmacy-500 text-white border-pharmacy-500' : 'border-slate-700 text-slate-300'}`}
             >
                 <BookOpen className="w-5 h-5" />
+                <span className="text-xs font-bold">وبلاگ</span>
             </button>
 
             <div className="hidden md:block w-px h-8 bg-slate-800 mx-2"></div>

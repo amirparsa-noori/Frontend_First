@@ -1032,7 +1032,29 @@ const App: React.FC = () => {
   // --- Ticket State ---
   const [tickets, setTickets] = useState<Ticket[]>(() => {
     const saved = localStorage.getItem('pharmacy_tickets');
-    return saved ? JSON.parse(saved) : [];
+    if (saved) return JSON.parse(saved);
+    // Initialize with one sample answered ticket if empty
+    return [{
+        id: 'T-SAMPLE-1',
+        userId: 'current-user-or-sample', // This will be filtered in profile by matching ID, so sample works if user logic matches or ignores it for demo
+        subject: 'پوست و مو',
+        status: 'answered',
+        messages: [
+            {
+                text: 'سلام، پوستم خیلی چرب هست و جوش میزنم. چه روتینی پیشنهاد می‌کنید؟',
+                sender: 'user',
+                date: '۱۴۰۲/۱۱/۲۰',
+                time: '۱۰:۳۰'
+            },
+            {
+                text: 'سلام کاربر گرامی. برای پوست چرب و مستعد آکنه، پیشنهاد ما استفاده از ژل شستشوی دیپ سنس و سپس استفاده از سرم نیاسینامید اوردینری است. همچنین استفاده از ضدآفتاب فاقد چربی لافارر فراموش نشود.',
+                sender: 'support',
+                date: '۱۴۰۲/۱۱/۲۰',
+                time: '۱۰:۴۵'
+            }
+        ],
+        lastUpdate: '۱۴۰۲/۱۱/۲۰'
+    }];
   });
 
   useEffect(() => {
@@ -1215,36 +1237,37 @@ const App: React.FC = () => {
         time: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
     };
 
+    const autoReplyMessage: TicketMessage = {
+        text: 'سوال شما ثبت شد. لطفاً منتظر پاسخ مشاور باشید.',
+        sender: 'support',
+        date: new Date().toLocaleDateString('fa-IR'),
+        time: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
+    };
+
     const newTicket: Ticket = {
         id: Date.now().toString(),
         userId: currentUser.id,
         subject: subject,
         status: 'pending',
-        messages: [newMessage],
+        messages: [newMessage, autoReplyMessage],
         lastUpdate: new Date().toLocaleDateString('fa-IR')
     };
 
     setTickets(prev => [newTicket, ...prev]);
+    sendPushNotification('تیکت ثبت شد', `تیکت شما با موضوع "${subject}" با موفقیت ثبت شد.`);
+  };
 
-    // Simulate Admin Response after 5 seconds
-    setTimeout(() => {
-        setTickets(currentTickets => currentTickets.map(t => {
-            if (t.id === newTicket.id) {
-                return {
-                    ...t,
-                    status: 'answered',
-                    messages: [...t.messages, {
-                        text: `سلام کاربر گرامی. درخواست مشاوره شما در زمینه ${subject} بررسی شد. لطفاً برای راهنمایی دقیق‌تر، جزئیات بیشتری ارسال کنید یا با شماره پشتیبانی تماس بگیرید.`,
-                        sender: 'support',
-                        date: new Date().toLocaleDateString('fa-IR'),
-                        time: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
-                    }]
-                };
-            }
-            return t;
-        }));
-        sendPushNotification('پاسخ مشاوره جدید', `پاسخ دکتر به سوال "${subject}" شما ثبت شد.`);
-    }, 5000);
+  const handleUpdateTicketMessage = (ticketId: string, messageIndex: number, newText: string) => {
+      setTickets(prev => prev.map(ticket => {
+          if (ticket.id === ticketId) {
+              const updatedMessages = [...ticket.messages];
+              if (updatedMessages[messageIndex]) {
+                  updatedMessages[messageIndex] = { ...updatedMessages[messageIndex], text: newText };
+                  return { ...ticket, messages: updatedMessages };
+              }
+          }
+          return ticket;
+      }));
   };
 
   const scrollToProducts = () => {
@@ -1666,6 +1689,15 @@ const App: React.FC = () => {
             <Consultation 
                 notify={sendPushNotification}
                 onCreateTicket={handleCreateTicket}
+                tickets={tickets}
+                onUpdateTicketMessage={handleUpdateTicketMessage}
+                onGoToProfile={() => {
+                    if (currentUser) {
+                        setActiveTab('profile');
+                    } else {
+                        setIsAuthOpen(true);
+                    }
+                }}
             />
         )}
 
@@ -1688,7 +1720,8 @@ const App: React.FC = () => {
               onCancelOrder={handleCancelOrder}
               onUpdateOrderStatus={handleUpdateOrderStatus}
               onOpenProduct={(p) => setSelectedProduct(p)}
-              tickets={tickets.filter(t => t.userId === currentUser.id)}
+              tickets={tickets.filter(t => t.userId === currentUser.id || t.id === 'T-SAMPLE-1')} // Allow sample ticket for demo
+              onUpdateTicketMessage={handleUpdateTicketMessage}
             />
         )}
 

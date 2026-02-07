@@ -19,6 +19,7 @@ interface ProfileProps {
   onUpdateOrderStatus: (id: string, status: any) => void;
   onOpenProduct: (product: Product) => void;
   tickets: Ticket[];
+  onUpdateTicketMessage?: (ticketId: string, messageIndex: number, newText: string) => void;
 }
 
 const toPersianDigits = (num: string | number) => {
@@ -40,7 +41,8 @@ const Profile: React.FC<ProfileProps> = ({
     onCancelOrder,
     onUpdateOrderStatus,
     onOpenProduct,
-    tickets
+    tickets,
+    onUpdateTicketMessage
 }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'reviews' | 'tickets'>('info');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -53,6 +55,9 @@ const Profile: React.FC<ProfileProps> = ({
   const [lastName, setLastName] = useState(user.lastName);
   const [nationalId, setNationalId] = useState(user.nationalId);
   const [phone, setPhone] = useState(user.phone);
+
+  // Ticket Editing
+  const [editingMessage, setEditingMessage] = useState<{index: number, text: string} | null>(null);
 
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,11 +214,54 @@ const Profile: React.FC<ProfileProps> = ({
                                   ? 'bg-pharmacy-600 text-white rounded-tr-none' 
                                   : 'bg-slate-800 border border-slate-700 text-slate-200 rounded-tl-none'
                               }`}>
-                                  <p className="text-sm leading-relaxed mb-2">{msg.text}</p>
-                                  <div className="text-[10px] opacity-70 flex justify-end gap-2">
-                                      <span>{toPersianDigits(msg.date)}</span>
-                                      <span>{toPersianDigits(msg.time)}</span>
-                                  </div>
+                                  {editingMessage && editingMessage.index === index && msg.sender === 'user' ? (
+                                      <div className="min-w-[200px]">
+                                          <textarea 
+                                              value={editingMessage.text}
+                                              onChange={(e) => setEditingMessage({...editingMessage, text: e.target.value})}
+                                              className="w-full bg-slate-800 text-white rounded p-2 text-sm mb-2"
+                                              rows={3}
+                                          />
+                                          <div className="flex gap-2 justify-end">
+                                              <button 
+                                                  onClick={() => setEditingMessage(null)}
+                                                  className="text-xs text-slate-300 hover:text-white"
+                                              >
+                                                  انصراف
+                                              </button>
+                                              <button 
+                                                  onClick={() => {
+                                                      if (onUpdateTicketMessage) {
+                                                          onUpdateTicketMessage(selectedTicket.id, index, editingMessage.text);
+                                                          setEditingMessage(null);
+                                                      }
+                                                  }}
+                                                  className="text-xs bg-white text-pharmacy-600 px-2 py-1 rounded font-bold"
+                                              >
+                                                  ذخیره
+                                              </button>
+                                          </div>
+                                      </div>
+                                  ) : (
+                                      <>
+                                          <p className="text-sm leading-relaxed mb-2 whitespace-pre-wrap">{msg.text}</p>
+                                          <div className="flex items-center justify-between gap-4">
+                                              <div className="text-[10px] opacity-70 flex justify-end gap-2 ml-auto">
+                                                  <span>{toPersianDigits(msg.date)}</span>
+                                                  <span>{toPersianDigits(msg.time)}</span>
+                                              </div>
+                                              {msg.sender === 'user' && selectedTicket.status === 'pending' && (
+                                                  <button 
+                                                      onClick={() => setEditingMessage({index, text: msg.text})}
+                                                      className="text-white/50 hover:text-white transition-colors p-1"
+                                                      title="ویرایش پیام"
+                                                  >
+                                                      <Edit className="w-3 h-3" />
+                                                  </button>
+                                              )}
+                                          </div>
+                                      </>
+                                  )}
                               </div>
                           </div>
                       ))}
