@@ -23,6 +23,27 @@ const Hero: React.FC<HeroProps> = ({ onExplore, onConsultation, generatedVideoUr
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
 
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/d0a4301c-b84f-4c55-bddc-e10b88093a8c', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: `log_${Date.now()}_hero_mount`,
+        timestamp: Date.now(),
+        location: 'Hero.tsx:mount',
+        message: 'Hero mounted',
+        data: {
+          imagesCount: PHARMACY_IMAGES.length,
+          generatedVideoUrlPresent: !!generatedVideoUrl
+        },
+        runId: 'pre-fix',
+        hypothesisId: 'H2'
+      })
+    }).catch(() => {});
+  }, [generatedVideoUrl]);
+  // #endregion
+
   useEffect(() => {
     const handleScroll = () => {
       const scrolled = window.scrollY;
@@ -41,7 +62,31 @@ const Hero: React.FC<HeroProps> = ({ onExplore, onConsultation, generatedVideoUr
   useEffect(() => {
     if (!generatedVideoUrl) {
       const interval = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % PHARMACY_IMAGES.length);
+        setCurrentImageIndex((prev) => {
+          const next = (prev + 1) % PHARMACY_IMAGES.length;
+
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/d0a4301c-b84f-4c55-bddc-e10b88093a8c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: `log_${Date.now()}_hero_slide`,
+              timestamp: Date.now(),
+              location: 'Hero.tsx:slide-advance',
+              message: 'Hero slide advanced',
+              data: {
+                previousIndex: prev,
+                nextIndex: next,
+                imagesCount: PHARMACY_IMAGES.length
+              },
+              runId: 'pre-fix',
+              hypothesisId: 'H3'
+            })
+          }).catch(() => {});
+          // #endregion
+
+          return next;
+        });
       }, 6000);
       return () => clearInterval(interval);
     }
