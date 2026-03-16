@@ -1,5 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
+import { useQuery } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import ProductCard from './components/ProductCard';
@@ -14,719 +15,153 @@ import Consultation from './components/Consultation';
 import MobileNav from './components/MobileNav';
 import Magazine from './components/Magazine';
 import { Product, CartItem, User, Address, Review, BlogPost, Order, OrderStatus, ShippingMethod, Ticket, TicketMessage } from './types';
-import { ArrowDown, Search, X as CloseIcon, SlidersHorizontal, Baby, Dumbbell, Pill, Sparkles, Feather, LayoutGrid, Bone, Filter, SortAsc, SortDesc, Zap, ChevronLeft, ArrowLeft, Stethoscope, RotateCcw } from 'lucide-react';
+import { ArrowDown, Search, X as CloseIcon, SlidersHorizontal, Baby, Dumbbell, Pill, Sparkles, Feather, LayoutGrid, Bone, Filter, SortAsc, SortDesc, Zap, ChevronLeft, ArrowLeft, Stethoscope, RotateCcw, Loader2 } from 'lucide-react';
 
-// --- EXPANDED DATA ---
-const MOCK_PRODUCTS: Product[] = [
-  // پوست و مو (Skin & Hair)
+// --- GraphQL Query ---
+interface GetProductsData {
+  products?: { nodes: any[] };
+}
+
+const GET_PRODUCTS = gql`
+  query GetProducts {
+    products(first: 100) {
+      nodes {
+        ... on SimpleProduct {
+          databaseId
+          name
+          description
+          regularPrice
+          image {
+            sourceUrl
+          }
+          productCategories {
+            nodes {
+              name
+            }
+          }
+          acfdetails {
+            brand
+            usage
+            warnings
+            storage
+            features
+            properties
+          }
+        }
+        ... on VariableProduct {
+          databaseId
+          name
+          description
+          regularPrice
+          image {
+            sourceUrl
+          }
+          productCategories {
+            nodes {
+              name
+            }
+          }
+          acfdetails {
+            brand
+            usage
+            warnings
+            storage
+            features
+            properties
+          }
+        }
+      }
+    }
+  }
+`;
+
+function mapWpProduct(wpNode: any): Product {
+  const acf = wpNode?.acfdetails ?? {};
+  const priceRaw = wpNode?.regularPrice ?? '';
+  const priceStr = typeof priceRaw === 'string'
+    ? priceRaw
+    : String(priceRaw ?? '');
+  const price = priceStr && !priceStr.includes('تومان')
+    ? `${priceStr} تومان`
+    : priceStr || '۰ تومان';
+
+  const featuresRaw = acf?.features;
+  const features: string[] = typeof featuresRaw === 'string'
+    ? featuresRaw.split('|').map((s: string) => s.trim()).filter(Boolean)
+    : Array.isArray(featuresRaw)
+      ? featuresRaw.map(String).filter(Boolean)
+      : [];
+
+  const propsRaw = acf?.properties;
+  const properties: { label: string; value: string }[] = (() => {
+    if (typeof propsRaw === 'string') {
+      return propsRaw.split('|').map((part: string) => {
+        const [label, value] = part.split(':').map((s: string) => s.trim());
+        return { label: label || '', value: value ?? '' };
+      }).filter(p => p.label || p.value);
+    }
+    if (Array.isArray(propsRaw)) {
+      return propsRaw.map((p: any) =>
+        typeof p === 'object' && p !== null
+          ? { label: String(p.label ?? ''), value: String(p.value ?? '') }
+          : { label: '', value: String(p ?? '') }
+      ).filter(p => p.label || p.value);
+    }
+    return [];
+  })();
+
+  const categoryNode = wpNode?.productCategories?.nodes?.[0];
+  const category = (categoryNode?.name && String(categoryNode.name)) || 'نامشخص';
+
+  return {
+    id: Number(wpNode?.databaseId) || 0,
+    name: String(wpNode?.name ?? ''),
+    description: String(wpNode?.description ?? '').replace(/<[^>]*>/g, ''),
+    price,
+    image: wpNode?.image?.sourceUrl ?? '',
+    category,
+    brand: String(acf?.brand ?? ''),
+    details: {
+      properties,
+      features,
+      usage: String(acf?.usage ?? ''),
+      warnings: String(acf?.warnings ?? ''),
+      storage: String(acf?.storage ?? '')
+    }
+  };
+}
+
+// --- Sample products for mock orders (used before real products load) ---
+const SAMPLE_ORDER_PRODUCTS: Product[] = [
   {
     id: 1,
     name: "کرم ضد آفتاب تخصصی لافارر SPF50",
-    description: "محافظت کامل در برابر اشعه‌های UVA و UVB، مناسب پوست‌های چرب و مختلط.",
+    description: "محافظت کامل در برابر اشعه‌های UVA و UVB.",
     price: "۴۵۰,۰۰۰ تومان",
     image: "https://images.unsplash.com/photo-1556228720-19de77d64eae?q=80&w=2000",
     category: "پوست و مو",
     brand: "Lafarrerr",
-    details: {
-      properties: [
-        { label: "نوع محصول", value: "کرم ضد آفتاب" },
-        { label: "حجم", value: "40 میلی لیتر" },
-        { label: "نوع پوست", value: "چرب و مستعد آکنه" },
-        { label: "SPF", value: "50+" },
-        { label: "محفظه", value: "تیوپی" },
-        { label: "کشور سازنده", value: "ایران" },
-        { label: "شرکت سازنده", value: "لابراتوار دکتر کامکار" }
-      ],
-      features: [
-        "فاقد چربی و جلوگیری از ایجاد جوش",
-        "مات کننده پوست",
-        "محافظت طیف گسترده (Broad Spectrum)",
-        "ضد لک و روشن کننده",
-        "حاوی عصاره شیرین بیان و بیربری"
-      ],
-      usage: "نیم ساعت قبل از قرار گرفتن در معرض آفتاب روی پوست تمیز استفاده شود و هر 2 تا 4 ساعت تمدید گردد.",
-      warnings: "از تماس با چشم خودداری شود. در صورت بروز حساسیت مصرف را قطع کنید.",
-      storage: "در دمای اتاق و دور از تابش مستقیم نور خورشید نگهداری شود."
-    }
+    details: { properties: [], features: [], usage: "", warnings: "", storage: "" }
   },
   {
     id: 2,
     name: "سرم ویتامین سی پریم",
-    description: "روشن کننده و جوان کننده پوست، حاوی ویتامین C پایدار.",
+    description: "روشن کننده و جوان کننده پوست.",
     price: "۱,۲۵۰,۰۰۰ تومان",
     image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1887",
     category: "پوست و مو",
     brand: "Prime",
-    details: {
-      properties: [
-        { label: "نوع محصول", value: "سرم صورت" },
-        { label: "حجم", value: "30 میلی لیتر" },
-        { label: "ماده موثره", value: "ویتامین C پایدار" },
-        { label: "بافت", value: "سبک و زود جذب" },
-        { label: "کشور سازنده", value: "ایران" },
-        { label: "برند", value: "پریم (Prime)" }
-      ],
-      features: [
-        "کاهش لک‌های پوستی و کک و مک",
-        "تحریک کلاژن سازی و کاهش چروک‌های سطحی",
-        "آنتی اکسیدان قوی",
-        "افزایش درخشندگی و شفافیت پوست",
-        "رطوبت رسانی عمیق"
-      ],
-      usage: "روزی یک یا دو بار روی پوست تمیز صورت و گردن ماساژ دهید تا جذب شود. استفاده از ضدآفتاب در طول روز الزامی است.",
-      warnings: "روی پوست ملتهب یا زخم باز استفاده نشود. ممکن است در دفعات اول کمی احساس گزگز ایجاد کند.",
-      storage: "در جای خنک و ترجیحاً در یخچال نگهداری شود تا از اکسید شدن ویتامین C جلوگیری شود."
-    }
+    details: { properties: [], features: [], usage: "", warnings: "", storage: "" }
   },
-  {
-    id: 5,
-    name: "شامپو ضد ریزش کافئین سریتا",
-    description: "محرک رشد مو، افزایش خون‌رسانی به کف سر.",
-    price: "۱۸۵,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?q=80&w=2070",
-    category: "پوست و مو",
-    brand: "Cerita",
-    details: {
-      properties: [
-        { label: "نوع محصول", value: "شامپو تقویت کننده" },
-        { label: "حجم", value: "200 میلی لیتر" },
-        { label: "ترکیبات کلیدی", value: "کافئین، ساوپالمتو" },
-        { label: "مناسب برای", value: "انواع مو دارای ریزش" },
-        { label: "کشور سازنده", value: "ایران" }
-      ],
-      features: [
-        "افزایش گردش خون مویرگی در کف سر",
-        "مهار آنزیم 5-آلفا ردوکتاز (عامل ریزش ارثی)",
-        "افزایش ضخامت تارهای مو",
-        "تنظیم چربی پوست سر",
-        "حاوی ویتامین‌های B و E"
-      ],
-      usage: "مقداری از شامپو را روی موهای خیس ریخته و به مدت 2 تا 3 دقیقه ماساژ دهید، سپس آبکشی نمایید.",
-      warnings: "فقط برای استعمال خارجی.",
-      storage: "دور از دسترس کودکان و در دمای محیط نگهداری شود."
-    }
-  },
-  {
-    id: 9,
-    name: "سرم ضد جوش نیاسینامید اوردینری",
-    description: "کنترل چربی پوست و کاهش منافذ باز.",
-    price: "۸۹۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?q=80&w=1887",
-    category: "پوست و مو",
-    brand: "The Ordinary",
-    details: {
-      properties: [
-        { label: "نام اصلی", value: "Niacinamide 10% + Zinc 1%" },
-        { label: "حجم", value: "30 و 60 میلی لیتر" },
-        { label: "نوع پوست", value: "چرب و مستعد جوش" },
-        { label: "PH", value: "5.5 - 6.5" },
-        { label: "کشور سازنده", value: "کانادا" }
-      ],
-      features: [
-        "تنظیم ترشح سبوم (چربی پوست)",
-        "کوچک کننده منافذ باز پوست",
-        "کاهش التهاب و قرمزی جوش",
-        "روشن کننده جای جوش (اسکار)",
-        "فاقد الکل، چربی و گلوتن"
-      ],
-      usage: "صبح و شب قبل از کرم‌های سنگین و مرطوب کننده، چند قطره را روی کل صورت پخش کنید.",
-      warnings: "همزمان با ویتامین C خالص استفاده نشود. در صورت بروز تحریک شدید، مصرف را قطع کنید.",
-      storage: "در جای خشک و خنک و دور از نور مستقیم نگهداری شود."
-    }
-  },
-  {
-    id: 11,
-    name: "کرم آبرسان و مرطوب کننده وچه",
-    description: "مناسب پوست های خشک و معمولی، حاوی هیالورونیک اسید.",
-    price: "۲۱۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1629198688000-71f23e745b6e?q=80&w=2000",
-    category: "پوست و مو",
-    brand: "Voche",
-    details: {
-        properties: [
-            { label: "نوع محصول", value: "کرم آبرسان" },
-            { label: "مناسب برای", value: "پوست خشک و معمولی" },
-            { label: "حجم", value: "60 میلی لیتر" },
-            { label: "ویتامین", value: "E" }
-        ],
-        features: [
-            "آبرسانی عمیق و طولانی مدت",
-            "جذب سریع بدون ایجاد چربی",
-            "حاوی هیالورونیک اسید و روغن اینکا اینچی",
-            "فاقد پارابن و سیلیکون"
-        ],
-        usage: "روزانه دو بار (صبح و شب) روی پوست تمیز صورت و گردن ماساژ دهید.",
-        warnings: "از تماس با چشم خودداری شود.",
-        storage: "در دمای محیط نگهداری شود."
-    }
-  },
-  {
-    id: 12,
-    name: "تونر پاک کننده صورت سی گل",
-    description: "حاوی ویتامین C، روشن کننده و پاک کننده عمیق منافذ.",
-    price: "۱۲۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1551201802-14eb066d9b04?q=80&w=2000",
-    category: "پوست و مو",
-    brand: "Seagull",
-    details: {
-        properties: [
-            { label: "نوع محصول", value: "تونر پاک کننده" },
-            { label: "حجم", value: "150 میلی لیتر" },
-            { label: "ماده شاخص", value: "ویتامین C" },
-            { label: "مناسب برای", value: "انواع پوست" }
-        ],
-        features: [
-            "تکمیل فرآیند پاکسازی پوست",
-            "تنظیم PH پوست",
-            "روشن کننده و شفاف کننده",
-            "حاوی عصاره پرتقال و چای سبز"
-        ],
-        usage: "پس از شستشوی صورت، پد آرایشی را به تونر آغشته کرده و روی پوست بکشید. نیاز به آبکشی ندارد.",
-        warnings: "روی زخم باز استفاده نشود. دور از دسترس کودکان نگهداری شود.",
-        storage: "در جای خشک و خنک نگهداری شود."
-    }
-  },
-
-  // محصولات آرایشی بهداشتی (Cosmetics)
-  {
-    id: 8,
-    name: "مرطوب کننده و آبرسان قوی سیمپل",
-    description: "بافت سبک بر پایه آب، بدون چربی، مناسب انواع پوست.",
-    price: "۳۲۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?q=80&w=1974",
-    category: "محصولات آرایشی بهداشتی",
-    brand: "Simple",
-    details: {
-      properties: [
-        { label: "مدل", value: "Light Moisturiser" },
-        { label: "حجم", value: "125 میلی لیتر" },
-        { label: "بافت", value: "فلوئید سبک" },
-        { label: "ماندگاری", value: "12 ساعت" },
-        { label: "کشور مبدا برند", value: "انگلستان" }
-      ],
-      features: [
-        "جذب بسیار سریع بدون ایجاد چربی",
-        "حاوی ویتامین B5 و E",
-        "مناسب پوست‌های حساس (بدون عطر و رنگ)",
-        "پایه آب (Water Based)",
-        "تست شده توسط متخصصین پوست"
-      ],
-      usage: "مقدار مناسبی از کرم را روی پوست تمیز صورت و گردن ماساژ دهید. قابل استفاده زیر آرایش.",
-      warnings: "فقط برای استعمال خارجی.",
-      storage: "در دمای اتاق نگهداری شود."
-    }
-  },
-  {
-    id: 13,
-    name: "ریمل حجم دهنده اسنس",
-    description: "حجم دهنده فوق‌العاده مژه‌ها، رنگ مشکی کاملا طبیعی.",
-    price: "۲۸۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1631214503851-a712345e5440?q=80&w=2000",
-    category: "محصولات آرایشی بهداشتی",
-    brand: "Essence",
-    details: {
-        properties: [
-            { label: "مدل", value: "I Love Extreme" },
-            { label: "رنگ", value: "مشکی" },
-            { label: "برس", value: "فیبری بزرگ" },
-            { label: "ضد آب", value: "نیست" }
-        ],
-        features: [
-            "حجم دهندگی فوق العاده",
-            "بدون ایجاد چسبندگی مژه ها",
-            "رنگدانه های مشکی غلیظ",
-            "پاک شدن آسان"
-        ],
-        usage: "برس ریمل را از ریشه مژه ها به سمت نوک بکشید. برای حجم بیشتر، این کار را تکرار کنید.",
-        warnings: "از پمپ کردن برس در محفظه خودداری کنید زیرا باعث خشک شدن ریمل می شود.",
-        storage: "پس از استفاده درب محصول را محکم ببندید."
-    }
-  },
-  {
-    id: 14,
-    name: "کرم پودر مات کالیستا",
-    description: "پوشش دهی بالا، بافت سبک و مخملی، مناسب استفاده روزانه.",
-    price: "۳۵۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1596462502278-27bfdd403cc2?q=80&w=2000",
-    category: "محصولات آرایشی بهداشتی",
-    brand: "Callista",
-    details: {
-        properties: [
-            { label: "مدل", value: "Long Lasting" },
-            { label: "نوع محفظه", value: "تیوپی" },
-            { label: "حجم", value: "35 میلی لیتر" },
-            { label: "پوشش", value: "مات و مخملی" }
-        ],
-        features: [
-            "ماندگاری بالا",
-            "بافت سبک بدون احساس سنگینی",
-            "پوشش کامل لک ها و جای جوش",
-            "مناسب انواع پوست"
-        ],
-        usage: "مقدار کمی از کرم پودر را روی صورت زده و با اسفنج یا براش مخصوص پخش کنید.",
-        warnings: "دور از نور مستقیم خورشید نگهداری شود.",
-        storage: "در جای خشک و خنک نگهداری شود."
-    }
-  },
-  {
-    id: 15,
-    name: "رژ لب جامد این لی",
-    description: "بدون سرب، حاوی مواد مرطوب کننده، ماندگاری بالا.",
-    price: "۱۶۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1586495777744-4413f21062dc?q=80&w=2000",
-    category: "محصولات آرایشی بهداشتی",
-    brand: "Inlay",
-    details: {
-        properties: [
-            { label: "نوع", value: "جامد مات" },
-            { label: "وزن", value: "4 گرم" },
-            { label: "SPF", value: "ندارد" },
-            { label: "کشور سازنده", value: "ایران" }
-        ],
-        features: [
-            "فاقد سرب و پارابن",
-            "حاوی مواد مرطوب کننده لب",
-            "پوشش دهی یکنواخت",
-            "ماندگاری مناسب"
-        ],
-        usage: "رژ لب را وسط لب بالایی قرار داده و به سمت گوشه ها بکشید، سپس برای لب پایین تکرار کنید.",
-        warnings: "در صورت بروز حساسیت مصرف را قطع کنید.",
-        storage: "دور از تابش مستقیم آفتاب و گرما نگهداری شود."
-    }
-  },
-  {
-    id: 16,
-    name: "میسلار واتر گارنیر",
-    description: "پاک کننده آرایش صورت، چشم و لب، مناسب پوست حساس.",
-    price: "۳۹۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1555677271-42790757d77b?q=80&w=2000",
-    category: "محصولات آرایشی بهداشتی",
-    brand: "Garnier",
-    details: {
-        properties: [
-            { label: "مدل", value: "Pink (Sensitive Skin)" },
-            { label: "حجم", value: "400 میلی لیتر" },
-            { label: "مناسب برای", value: "پوست های حساس" },
-            { label: "نوع", value: "محلول پاک کننده" }
-        ],
-        features: [
-            "پاک کننده آرایش صورت، چشم و لب",
-            "بدون نیاز به آبکشی",
-            "فاقد عطر و الکل",
-            "تسکین دهنده پوست"
-        ],
-        usage: "پد پنبه ای را به محلول آغشته کرده و به آرامی روی پوست بکشید تا آرایش پاک شود.",
-        warnings: "از ورود مستقیم مایع به داخل چشم خودداری شود.",
-        storage: "در دمای اتاق نگهداری شود."
-    }
-  },
-
-  // مکمل های غذایی دارویی (Supplements)
   {
     id: 3,
-    name: "قرص کلاژن گلد (Collagen Gold)",
-    description: "کمک به سلامت پوست، مو و ناخن، کاهش چین و چروک.",
+    name: "قرص کلاژن گلد",
+    description: "کمک به سلامت پوست، مو و ناخن.",
     price: "۹۸۰,۰۰۰ تومان",
     image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=2000",
     category: "مکمل های غذایی دارویی",
     brand: "Adian",
-    details: {
-      properties: [
-        { label: "تعداد در بسته", value: "60 عدد" },
-        { label: "نوع کلاژن", value: "هیدرولیز شده نوع 1 و 3" },
-        { label: "دوز کلاژن", value: "833 میلی گرم در هر قرص" },
-        { label: "سایر ترکیبات", value: "ویتامین C، هیالورونیک اسید" },
-        { label: "کشور سازنده", value: "ایران (تحت لیسانس)" }
-      ],
-      features: [
-        "افزایش خاصیت ارتجاعی پوست",
-        "کاهش عمق چین و چروک‌ها",
-        "تقویت ضخامت مو و استحکام ناخن",
-        "بهبود آبرسانی پوست",
-        "فاقد شکر و مواد نگهدارنده مضر"
-      ],
-      usage: "روزانه 3 عدد قرص به مدت حداقل 4 تا 12 هفته مصرف شود. بهترین زمان مصرف شب قبل از خواب است.",
-      warnings: "در دوران بارداری و شیردهی با مشورت پزشک مصرف شود. در صورت نارسایی کلیوی با احتیاط مصرف شود.",
-      storage: "در جای خشک و خنک و در دمای زیر 30 درجه سانتی گراد نگهداری شود."
-    }
-  },
-  {
-    id: 7,
-    name: "کپسول هیرتامین (Hairtamin)",
-    description: "تقویت کننده قوی مو، جلوگیری از ریزش.",
-    price: "۱,۶۰۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?q=80&w=1974",
-    category: "مکمل های غذایی دارویی",
-    brand: "Hairtamin",
-    details: {
-        properties: [
-            { label: "تعداد", value: "30 عدد (مصرف یک ماه)" },
-            { label: "ترکیبات", value: "بیوتین، زینک، زردچوبه، فلفل سیاه" },
-            { label: "کشور سازنده", value: "آمریکا" },
-            { label: "نوع", value: "Advanced Formula" }
-        ],
-        features: [
-            "توقف ریزش مو و افزایش رشد مجدد",
-            "ضخیم کننده تارهای مو",
-            "فاقد گلوتن، مواد نگهدارنده و آلرژن",
-            "مناسب برای انواع مو (مردان و زنان)"
-        ],
-        usage: "روزانه یک عدد کپسول همراه با غذا میل شود.",
-        warnings: "بیش از دوز توصیه شده مصرف نشود. افراد زیر 18 سال با مشورت پزشک مصرف کنند.",
-        storage: "در جای خشک، خنک و دور از دسترس کودکان نگهداری شود."
-    }
-  },
-  {
-    id: 17,
-    name: "قرص جوشان ویتامین C یوروویتال",
-    description: "تقویت سیستم ایمنی، جذب سریع، طعم پرتقالی.",
-    price: "۸۵,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1617109033379-679905c14902?q=80&w=2000",
-    category: "مکمل های غذایی دارویی",
-    brand: "Eurho Vital",
-    details: {
-        properties: [
-            { label: "دوز", value: "1000 میلی گرم" },
-            { label: "تعداد", value: "20 عدد" },
-            { label: "طعم", value: "پرتقال" },
-            { label: "کشور سازنده", value: "آلمان (بسته بندی ایران)" }
-        ],
-        features: [
-            "تقویت سیستم ایمنی بدن",
-            "کمک به کلاژن سازی",
-            "آنتی اکسیدان قوی",
-            "جذب سریع و آسان"
-        ],
-        usage: "روزانه یک قرص را در یک لیوان آب حل کرده و میل نمایید.",
-        warnings: "در بیماران دیابتی و سنگ کلیه با احتیاط و مشورت پزشک مصرف شود.",
-        storage: "در دمای زیر 25 درجه سانتی گراد و در قوطی بسته نگهداری شود."
-    }
-  },
-  {
-    id: 18,
-    name: "کپسول امگا 3 زهراوی",
-    description: "حفظ سلامت قلب و عروق، کاهش کلسترول.",
-    price: "۱۴۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1550572017-4fcdbb56321f?q=80&w=2000",
-    category: "مکمل های غذایی دارویی",
-    brand: "Zahravi",
-    details: {
-        properties: [
-            { label: "تعداد", value: "50 عدد" },
-            { label: "دوز", value: "1000 میلی گرم روغن ماهی" },
-            { label: "EPA/DHA", value: "180/120 میلی گرم" },
-            { label: "نوع ژلاتین", value: "حلال" }
-        ],
-        features: [
-            "کمک به سلامت قلب و عروق",
-            "کاهش تری گلیسیرید خون",
-            "ضد التهاب مفاصل",
-            "بهبود عملکرد مغز"
-        ],
-        usage: "روزانه یک تا دو عدد کپسول همراه با غذا و آب کافی میل شود.",
-        warnings: "افرادی که داروهای رقیق کننده خون (مثل وارفارین) مصرف می کنند باید با پزشک مشورت کنند.",
-        storage: "در دمای کمتر از 25 درجه و دور از نور و رطوبت نگهداری شود."
-    }
-  },
-
-  // مکمل های ورزشی (Sports)
-  {
-    id: 4,
-    name: "پودر پروتئین وی کاله (۲۲۷۰ گرم)",
-    description: "خلوص بالا، طعم شکلاتی، مناسب عضله سازی.",
-    price: "۳,۴۰۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?q=80&w=1887",
-    category: "مکمل های ورزشی",
-    brand: "Kalleh",
-    details: {
-      properties: [
-        { label: "وزن", value: "2270 گرم (5 پوند)" },
-        { label: "طعم", value: "شکلاتی" },
-        { label: "پروتئین در هر سروینگ", value: "24 گرم" },
-        { label: "BCAA", value: "5 گرم در هر سروینگ" },
-        { label: "کشور سازنده", value: "ایران" }
-      ],
-      features: [
-        "پروتئین وی کنسانتره با کیفیت بالا",
-        "فاقد شکر افزوده",
-        "حلالیت بسیار عالی",
-        "کمک به رشد و ریکاوری عضلات",
-        "حاوی آنزیم‌های هضم کننده برای جذب بهتر"
-      ],
-      usage: "یک پیمانه (30 گرم) را با 250 میلی لیتر آب یا شیر مخلوط کرده و بلافاصله بعد از تمرین میل کنید.",
-      warnings: "افراد دارای نارسایی کلیوی یا کبدی قبل از مصرف با پزشک مشورت کنند. بیش از دوز توصیه شده مصرف نشود.",
-      storage: "در جای خشک و خنک نگهداری شود. درب قوطی پس از مصرف بسته شود."
-    }
-  },
-  {
-    id: 19,
-    name: "کراتین مونوهیدرات پی ان سی",
-    description: "افزایش قدرت و حجم عضلات، ۳۰۰ گرمی.",
-    price: "۵۵۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?q=80&w=2000",
-    category: "مکمل های ورزشی",
-    brand: "PNC",
-    details: {
-        properties: [
-            { label: "وزن", value: "300 گرم" },
-            { label: "نوع", value: "مونوهیدرات خالص" },
-            { label: "شرکت سازنده", value: "کارن (PNC)" },
-            { label: "طعم", value: "بدون طعم" }
-        ],
-        features: [
-            "افزایش قدرت و استقامت عضلانی",
-            "کمک به عضله سازی سریع تر",
-            "بهبود ریکاوری بین ست های تمرینی",
-            "خلوص بالا و جذب عالی"
-        ],
-        usage: "دوره بارگیری: 5 روز، روزی 20 گرم (4 وعده 5 گرمی). دوره نگهداری: روزی 5 گرم قبل یا بعد از تمرین.",
-        warnings: "در طول مصرف آب فراوان بنوشید. افراد زیر 18 سال و سالمندان با مشورت پزشک مصرف کنند.",
-        storage: "درب قوطی را پس از مصرف محکم ببندید و در جای خشک نگهداری کنید."
-    }
-  },
-  {
-    id: 20,
-    name: "گینر سریوس مس اپتیموم",
-    description: "افزایش وزن سریع، کربوهیدرات و پروتئین بالا.",
-    price: "۴,۲۰۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1579722820308-d74e571900a9?q=80&w=2000",
-    category: "مکمل های ورزشی",
-    brand: "ON",
-    details: {
-        properties: [
-            { label: "وزن", value: "2.7 کیلوگرم" },
-            { label: "کالری", value: "1250 در هر سروینگ" },
-            { label: "پروتئین", value: "50 گرم در هر سروینگ" },
-            { label: "نسبت کربوهیدرات به پروتئین", value: "5 به 1" }
-        ],
-        features: [
-            "مناسب برای افراد اکتومورف (بسیار لاغر)",
-            "حاوی 25 نوع ویتامین و مواد معدنی",
-            "غنی شده با کراتین و گلوتامین",
-            "طعم و حلالیت عالی"
-        ],
-        usage: "دو پیمانه سرپر را با 700 میلی لیتر آب مخلوط کرده و در وعده های مختلف (صبح، بعد تمرین) میل کنید.",
-        warnings: "افراد دیابتی قبل از مصرف با پزشک مشورت کنند. ممکن است باعث افزایش توده چربی در صورت عدم تمرین شود.",
-        storage: "در جای خشک و خنک نگهداری شود."
-    }
-  },
-
-  // مادر و کودک (Mom & Baby)
-  {
-    id: 6,
-    name: "شیر خشک آپتامیل ۱ نوتریشیا",
-    description: "حاوی پره بیوتیک، مناسب بدو تولد تا ۶ ماهگی.",
-    price: "۱۵۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1632053001869-7c8fa07137b0?q=80&w=2070",
-    category: "مادر و کودک",
-    brand: "Aptamil",
-    details: {
-      properties: [
-        { label: "رده سنی", value: "از بدو تولد تا 6 ماهگی" },
-        { label: "وزن", value: "400 گرم" },
-        { label: "نوع محفظه", value: "قوطی فلزی" },
-        { label: "برند", value: "نوتریشیا (Nutricia)" },
-        { label: "ساخت", value: "ایران (تحت لیسانس)" }
-      ],
-      features: [
-        "حاوی پره بیوتیک های scGOS/lcFOS",
-        "غنی شده با آهن، امگا 3 و امگا 6 (LCPs)",
-        "طعم و ترکیبات نزدیک به شیر مادر",
-        "تقویت سیستم ایمنی نوزاد",
-        "کمک به رشد باکتری های مفید روده"
-      ],
-      usage: "طبق جدول تغذیه روی قوطی، آب جوشیده سرد شده را با پیمانه مخصوص مخلوط کنید.",
-      warnings: "شیر آماده شده باید ظرف مدت 1 ساعت مصرف شود. باقیمانده شیر را دور بریزید.",
-      storage: "در جای خشک و خنک (خارج از یخچال) نگهداری شود و تا 4 هفته پس از باز شدن مصرف گردد."
-    }
-  },
-  {
-    id: 21,
-    name: "پوشک مای بیبی سایز 4",
-    description: "بسته 34 عددی، قدرت جذب بالا، ضد حساسیت.",
-    price: "۲۳۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1551806371-d648b26500b5?q=80&w=2000",
-    category: "مادر و کودک",
-    brand: "My Baby",
-    details: {
-        properties: [
-            { label: "سایز", value: "4 (بزرگ)" },
-            { label: "تعداد در بسته", value: "34 عدد" },
-            { label: "مناسب وزن", value: "10 تا 18 کیلوگرم" },
-            { label: "برند", value: "مای بیبی" }
-        ],
-        features: [
-            "حاوی لوسیون با عصاره بابونه",
-            "قدرت جذب بسیار بالا",
-            "لایه بیرونی تنفسی برای عبور هوا",
-            "چسب های مکانیکی و قابل تنظیم"
-        ],
-        usage: "پوشک را زیر کودک قرار داده و چسب ها را به اندازه دور کمر تنظیم کنید.",
-        warnings: "در صورت مشاهده حساسیت پوستی، برند پوشک را تغییر دهید یا با پزشک مشورت کنید.",
-        storage: "در جای خشک نگهداری شود."
-    }
-  },
-  {
-    id: 22,
-    name: "شیشه شیر اونت (Avent)",
-    description: "ضد نفخ، سر شیشه مشابه سینه مادر، ۱۲۵ میلی لیتر.",
-    price: "۵۸۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1595240366657-b060d4182902?q=80&w=2000",
-    category: "مادر و کودک",
-    brand: "Philips Avent",
-    details: {
-        properties: [
-            { label: "گنجایش", value: "125 میلی لیتر" },
-            { label: "جنس بدنه", value: "پلی پروپیلن (طلقی)" },
-            { label: "نوع سر شیشه", value: "سیلیکونی نرم (شماره 1)" },
-            { label: "BPA", value: "Free (فاقد مواد مضر)" }
-        ],
-        features: [
-            "سیستم ضد نفخ (Anti-Colic) پیشرفته",
-            "طراحی ارگونومیک برای نگهداری آسان",
-            "سر شیشه گلبرگی مشابه سینه مادر",
-            "شستشو و مونتاژ آسان"
-        ],
-        usage: "قبل از اولین استفاده، قطعات را 5 دقیقه در آب جوش استریل کنید. پس از هر بار مصرف کاملا بشویید.",
-        warnings: "از گرم کردن شیر در مایکروویو خودداری کنید (خطر سوختگی نوزاد).",
-        storage: "در جای تمیز و خشک نگهداری شود."
-    }
-  },
-
-  // ارتوپدی (Orthopedic)
-  {
-    id: 10,
-    name: "مچ بند آتل دار پاک سمن",
-    description: "تثبیت کننده مچ دست، مناسب سندروم تونل کارپال.",
-    price: "۲۸۵,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070",
-    category: "محصولات ارتوپدی",
-    brand: "Paksaman",
-    details: {
-      properties: [
-        { label: "سایز", value: "فری سایز (قابل تنظیم)" },
-        { label: "جنس", value: "نئوپرن ضد حساسیت" },
-        { label: "نوع آتل", value: "آلومینیومی سخت" },
-        { label: "کاربرد", value: "مچ دست (راست/چپ)" },
-        { label: "برند", value: "پاک سمن" }
-      ],
-      features: [
-        "حمایت کامل از مفصل مچ دست",
-        "کاهش درد و التهاب تاندون‌ها",
-        "مناسب برای درمان سندرم تونل کارپال (CTS)",
-        "قابل شستشو (با دست)",
-        "سبک و راحت برای استفاده طولانی مدت"
-      ],
-      usage: "آتل را در کف دست قرار داده و بندها را متناسب با سایز مچ محکم کنید. استفاده در شب هنگام خواب توصیه می‌شود.",
-      warnings: "از سفت بستن بیش از حد که باعث قطع گردش خون شود خودداری کنید.",
-      storage: "با آب سرد شسته شود و از حرارت مستقیم دور نگه داشته شود."
-    }
-  },
-  {
-    id: 23,
-    name: "زانوبند کشکک باز طب و صنعت",
-    description: "حمایت از مفصل زانو، نئوپرن ضد حساسیت.",
-    price: "۳۴۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1594953932675-8025287f3b52?q=80&w=2000",
-    category: "محصولات ارتوپدی",
-    brand: "Teb & Sanat",
-    details: {
-        properties: [
-            { label: "سایز", value: "L, XL" },
-            { label: "جنس", value: "نئوپرن" },
-            { label: "مدل", value: "کشکک باز" },
-            { label: "نوع", value: "قابل تنظیم" }
-        ],
-        features: [
-            "حمایت از مفصل زانو و کشکک",
-            "حفظ گرمای موضعی برای کاهش درد",
-            "جلوگیری از جابجایی کشکک",
-            "کاهش فشار روی زانو"
-        ],
-        usage: "زانوبند را طوری ببندید که سوراخ آن روی کشکک زانو قرار گیرد و چسب ها را محکم کنید.",
-        warnings: "در صورت افزایش درد یا تورم، استفاده را قطع و با پزشک مشورت کنید.",
-        storage: "با آب سرد و صابون شسته شود. از اتو کردن و حرارت دادن خودداری شود."
-    }
-  },
-
-  // تجهیزات پزشکی (Medical Equipment) - NEW CATEGORY
-  {
-    id: 30,
-    name: "فشارسنج دیجیتال بازویی بیورر (Beurer)",
-    description: "دقت بالا، دارای حافظه داخلی و تشخیص آریتمی.",
-    price: "۲,۸۵۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?q=80&w=2079",
-    category: "تجهیزات پزشکی",
-    brand: "Beurer",
-    details: {
-        properties: [
-            { label: "مدل", value: "BM47" },
-            { label: "نوع", value: "بازویی تمام اتوماتیک" },
-            { label: "منبع تغذیه", value: "4 عدد باتری قلمی" },
-            { label: "سایز کاف", value: "22 تا 35 سانتی متر" }
-        ],
-        features: [
-            "تشخیص آریتمی (بی نظمی ضربان قلب)",
-            "نمایشگر بزرگ و خوانا با نور پس زمینه",
-            "محاسبه میانگین فشار خون صبح و شب",
-            "خاموشی خودکار برای صرفه جویی در باتری"
-        ],
-        usage: "کاف را روی بازوی برهنه (حدود 2 سانتیمتر بالاتر از آرنج) ببندید، دست را روی تکیه گاه قرار داده و دکمه استارت را فشار دهید.",
-        warnings: "در حین اندازه گیری صحبت نکنید و حرکت نکنید. قبل از اندازه گیری 5 دقیقه استراحت کنید.",
-        storage: "در کیف مخصوص و دور از رطوبت و ضربه نگهداری شود."
-    }
-  },
-  {
-    id: 31,
-    name: "تب سنج دیجیتال غیر تماسی",
-    description: "اندازه گیری دما در کمتر از 1 ثانیه بدون تماس با پوست.",
-    price: "۹۸۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1584634731339-252c581abfc5?q=80&w=2070",
-    category: "تجهیزات پزشکی",
-    brand: "Xiaomi",
-    details: {
-        properties: [
-            { label: "دقت", value: "0.2 درجه سانتی گراد" },
-            { label: "فاصله اندازه گیری", value: "3 تا 5 سانتی متر" },
-            { label: "واحد نمایش", value: "سانتی گراد / فارنهایت" },
-            { label: "هشدار تب", value: "دارد (بوق هشدار)" }
-        ],
-        features: [
-            "سنسور مادون قرمز دقیق ژاپنی",
-            "مناسب برای نوزادان و بزرگسالان",
-            "قابلیت اندازه گیری دمای اجسام و مایعات",
-            "طراحی ارگونومیک و سبک"
-        ],
-        usage: "دستگاه را در فاصله 3 سانتی متری وسط پیشانی نگه داشته و دکمه اندازه گیری را فشار دهید.",
-        warnings: "لنز سنسور را تمیز نگه دارید. در محیط با تغییرات دمایی شدید استفاده نشود.",
-        storage: "بدون باتری در جعبه مخصوص نگهداری شود."
-    }
-  },
-  {
-    id: 32,
-    name: "پالس اکسیمتر انگشتی (سنجش اکسیژن خون)",
-    description: "نمایش درصد اشباع اکسیژن خون (SpO2) و ضربان قلب.",
-    price: "۴۲۰,۰۰۰ تومان",
-    image: "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?q=80&w=2069",
-    category: "تجهیزات پزشکی",
-    brand: "Berry",
-    details: {
-        properties: [
-            { label: "نوع نمایشگر", value: "OLED رنگی" },
-            { label: "دامنه سنجش", value: "70% تا 100%" },
-            { label: "چرخش تصویر", value: "4 جهته" },
-            { label: "وزن", value: "50 گرم (با باتری)" }
-        ],
-        features: [
-            "مصرف باتری بسیار پایین",
-            "خاموشی خودکار پس از 8 ثانیه عدم استفاده",
-            "نمایش گرافیکی ضربان قلب (Plethysmogram)",
-            "مناسب استفاده خانگی و کلینیکی"
-        ],
-        usage: "گیره را باز کرده، انگشت اشاره را کاملا داخل دستگاه قرار دهید و دکمه روشن را بزنید.",
-        warnings: "ناخن انگشت نباید لاک یا ناخن مصنوعی داشته باشد. دست سرد نباشد.",
-        storage: "دور از ضربه شدید و مایعات نگهداری شود."
-    }
+    details: { properties: [], features: [], usage: "", warnings: "", storage: "" }
   }
 ];
 
@@ -882,8 +317,8 @@ const generateMockOrders = (): Order[] => {
             id: 'ORD-982145',
             userId: 'user1',
             items: [
-                { ...MOCK_PRODUCTS[0], quantity: 1 },
-                { ...MOCK_PRODUCTS[2], quantity: 2 }
+                { ...SAMPLE_ORDER_PRODUCTS[0], quantity: 1 },
+                { ...SAMPLE_ORDER_PRODUCTS[2], quantity: 2 }
             ],
             totalPrice: 1520000,
             date: '۱۴۰۲/۱۰/۱۵',
@@ -1001,7 +436,19 @@ const CategoryShowcase = ({
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
-  const [products] = useState<Product[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
+
+  const { data, loading, error } = useQuery<GetProductsData>(GET_PRODUCTS);
+
+  useEffect(() => {
+    if (data?.products?.nodes) {
+      const mapped = data.products.nodes
+        .filter((node: any) => node?.databaseId)
+        .map((node: any) => mapWpProduct(node))
+        .filter((p: Product) => p.id && p.name);
+      setProducts(mapped);
+    }
+  }, [data]);
   
   // Filter States
   const [selectedCategory, setSelectedCategory] = useState("همه محصولات");
@@ -1359,6 +806,28 @@ const App: React.FC = () => {
       )}
 
       <main>
+        {loading && (
+          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-8 py-24 px-4">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full border-4 border-pharmacy-500/30 border-t-pharmacy-500 animate-spin" />
+              <Loader2 className="w-12 h-12 text-pharmacy-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" strokeWidth={2} />
+            </div>
+            <p className="text-slate-400 font-medium">در حال بارگذاری محصولات...</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-4xl mx-auto">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <div key={i} className="bg-slate-800/50 rounded-2xl h-64 animate-pulse border border-slate-700/50" />
+              ))}
+            </div>
+          </div>
+        )}
+        {error && (
+          <div className="max-w-2xl mx-4 sm:mx-auto my-24 p-6 rounded-2xl bg-red-500/10 border-2 border-red-500/50 text-red-400">
+            <h3 className="text-xl font-bold mb-2">خطا در دریافت محصولات</h3>
+            <p className="text-sm">{error.message}</p>
+          </div>
+        )}
+        {!loading && !error && (
+        <>
         {activeTab === 'home' && (
           <>
             <Hero 
@@ -1751,6 +1220,8 @@ const App: React.FC = () => {
             onCancel={() => setActiveTab('cart')}
             onAddAddress={() => setIsAddressFormOpen(true)}
           />
+        )}
+        </>
         )}
       </main>
 

@@ -1,6 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
 import App from './App';
+
+const client = new ApolloClient({
+  link: new HttpLink({ uri: 'https://drshamimnasab.ir/graphql' }),
+  cache: new InMemoryCache()
+});
 
 // #region agent log
 fetch('http://127.0.0.1:7242/ingest/d0a4301c-b84f-4c55-bddc-e10b88093a8c', {
@@ -26,6 +33,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <ApolloProvider client={client}>
+      <App />
+    </ApolloProvider>
   </React.StrictMode>
 );
