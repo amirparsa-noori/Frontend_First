@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import Navbar from './components/Navbar';
@@ -29,6 +29,7 @@ const GET_PRODUCTS = gql`
         ... on SimpleProduct {
           databaseId
           name
+          slug
           description
           regularPrice
           image {
@@ -51,6 +52,7 @@ const GET_PRODUCTS = gql`
         ... on VariableProduct {
           databaseId
           name
+          slug
           description
           regularPrice
           image {
@@ -110,12 +112,18 @@ function mapWpProduct(wpNode: any): Product {
     return [];
   })();
 
+  const latinNameFromProps = properties.find(
+    p => /نام\s*لاتین|اسم\s*لاتین|latin\s*name|name\s*en/i.test(p.label)
+  )?.value?.trim();
+
   const categoryNode = wpNode?.productCategories?.nodes?.[0];
   const category = (categoryNode?.name && String(categoryNode.name)) || 'نامشخص';
 
   return {
     id: Number(wpNode?.databaseId) || 0,
     name: String(wpNode?.name ?? ''),
+    slug: wpNode?.slug ? String(wpNode.slug) : undefined,
+    latinName: latinNameFromProps || undefined,
     description: String(wpNode?.description ?? '').replace(/<[^>]*>/g, ''),
     price,
     image: wpNode?.image?.sourceUrl ?? '',
@@ -304,7 +312,6 @@ const CATEGORY_ITEMS = [
   { id: "مادر و کودک", label: "مادر و کودک", icon: Baby },
 ];
 
-const BRANDS = ["Lafarrerr", "Prime", "Cerita", "The Ordinary", "Simple", "Kalleh", "Aptamil", "My Baby", "Paksaman", "Cinere", "Seagull", "Callista", "Beurer", "Berry", "Xiaomi"];
 
 const MOCK_REVIEWS: Review[] = [
   { id: '1', userId: 'user1', productId: 1, rating: 5, comment: 'عالی بود، پوستم خیلی شفاف شده.', date: '۱۴۰۲/۱۱/۱۲', userName: 'سارا' },
@@ -730,13 +737,25 @@ const App: React.FC = () => {
 
   // --- Filtering Logic ---
   const parsePrice = (priceStr: string) => {
-    return parseInt(priceStr.replace(/[^0-9]/g, ''), 10) || 0;
+    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+    let clean = priceStr;
+    for (let i = 0; i < 10; i++) clean = clean.split(persianDigits[i]).join(String(i));
+    return parseInt(clean.replace(/[^0-9]/g, ''), 10) || 0;
   };
 
+  const availableBrands = useMemo(() =>
+    [...new Set(products.map(p => p.brand).filter(b => b))].sort(),
+    [products]
+  );
+
   const filteredProducts = products.filter(p => {
+    const q = searchQuery.toLowerCase().trim();
     const matchesCategory = selectedCategory === "همه محصولات" || p.category === selectedCategory;
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         p.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !q ||
+      p.name.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q) ||
+      (p.slug && p.slug.toLowerCase().includes(q)) ||
+      (p.latinName && p.latinName.toLowerCase().includes(q));
     const matchesBrand = selectedBrand === "همه برندها" || p.brand === selectedBrand;
     return matchesCategory && matchesSearch && matchesBrand;
   }).sort((a, b) => {
@@ -1025,7 +1044,7 @@ const App: React.FC = () => {
                                 className="w-full appearance-none bg-slate-800 border border-slate-700 rounded-2xl px-10 py-3 text-white focus:border-pharmacy-500 outline-none cursor-pointer"
                             >
                                 <option value="همه برندها">همه برندها</option>
-                                {BRANDS.map(brand => (
+                                {availableBrands.map(brand => (
                                     <option key={brand} value={brand}>{brand}</option>
                                 ))}
                             </select>
@@ -1151,6 +1170,7 @@ const App: React.FC = () => {
                 onRemove={removeFromCart} 
                 onCheckout={handleCheckoutStart} 
                 onContinueShopping={() => setActiveTab('products')}
+                onOpenProduct={(item) => setSelectedProduct(item)}
             />
         )}
 

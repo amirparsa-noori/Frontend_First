@@ -61,7 +61,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   const numericPrice = getNumericPrice(product.price);
   const discountPercent = 15;
-  const oldPrice = Math.round(numericPrice / (1 - discountPercent / 100));
+  const oldPriceRaw = numericPrice / (1 - discountPercent / 100);
+  const oldPrice = Math.ceil(oldPriceRaw / 10000) * 10000;
   const priceDisplay = numericPrice.toLocaleString('fa-IR');
 
   const averageRating = reviews.length > 0 
@@ -214,23 +215,23 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
               {/* Price and Actions */}
               <div className="border-t border-slate-800 pt-6 md:pt-8 mb-10">
-                  <div className="flex items-center justify-between mb-6 md:mb-8">
-                  <div className="flex flex-col">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 md:mb-8">
+                  <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-slate-500 text-base md:text-xl line-through decoration-red-500/30">
-                          {Math.round(oldPrice).toLocaleString('fa-IR')}
+                          {oldPrice.toLocaleString('fa-IR')}
                       </span>
                       <span className="bg-red-500 text-white text-[10px] md:text-xs font-bold px-1.5 py-0.5 rounded-md">
                           {discountPercent.toLocaleString('fa-IR')}٪
                       </span>
                       </div>
-                      <span className="text-2xl md:text-4xl font-display text-pharmacy-400 leading-none inline-flex items-center gap-2">
+                      <span className="text-2xl md:text-4xl font-display text-pharmacy-400 leading-none inline-flex items-center gap-1.5">
                       {priceDisplay}
-                      <img src="/toman-logo.png" alt="تومان" className="h-4 md:h-5 w-auto object-contain opacity-90" />
+                      <img src="/toman-logo.png" alt="تومان" className="h-3 md:h-3.5 w-auto object-contain opacity-90" />
                       </span>
                   </div>
                   
-                  <div className="flex items-center gap-2 md:gap-4">
+                  <div className="flex items-center gap-2 md:gap-4 shrink-0">
                       <button 
                       onClick={onToggleFavorite}
                       className={`p-3 md:p-4 rounded-xl md:rounded-2xl transition-all border ${

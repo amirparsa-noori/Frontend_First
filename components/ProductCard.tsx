@@ -36,7 +36,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const numericPrice = getNumericPrice(product.price);
   const discountPercent = 15;
-  const oldPrice = Math.round(numericPrice / (1 - discountPercent / 100));
+  const oldPriceRaw = numericPrice / (1 - discountPercent / 100);
+  const oldPrice = Math.ceil(oldPriceRaw / 10000) * 10000;
   const priceDisplay = numericPrice.toLocaleString('fa-IR');
   const tomanLogo = '/toman-logo.png';
 
@@ -87,7 +88,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-700/60">
           <div className="flex flex-col">
             <span className="text-xs sm:text-sm text-slate-500 line-through decoration-red-500/50">
-              {Math.round(oldPrice).toLocaleString('fa-IR')}
+              {oldPrice.toLocaleString('fa-IR')}
             </span>
             <span className="text-lg sm:text-xl font-bold text-pharmacy-400 font-sans inline-flex items-center gap-1.5 mt-0.5">
               {priceDisplay}

@@ -9,9 +9,10 @@ interface CartProps {
   onRemove: (id: number) => void;
   onCheckout: () => void;
   onContinueShopping: () => void;
+  onOpenProduct?: (product: CartItem) => void;
 }
 
-const Cart: React.FC<CartProps> = ({ items, onUpdateQuantity, onRemove, onCheckout, onContinueShopping }) => {
+const Cart: React.FC<CartProps> = ({ items, onUpdateQuantity, onRemove, onCheckout, onContinueShopping, onOpenProduct }) => {
   const [showSafetyCheck, setShowSafetyCheck] = useState(false);
   const [confirmedProductIds, setConfirmedProductIds] = useState<number[]>([]);
   const [currentSafetyIndex, setCurrentSafetyIndex] = useState(0);
@@ -106,36 +107,45 @@ const Cart: React.FC<CartProps> = ({ items, onUpdateQuantity, onRemove, onChecko
         {/* Items List */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => {
-            const priceParts = item.price.split(' ');
-            const priceValue = priceParts[0];
-            const priceCurrency = priceParts.length > 1 ? priceParts.slice(1).join(' ') : 'تومان';
+            const itemPrice = parsePersianPrice(item.price);
+            const priceDisplay = itemPrice.toLocaleString('fa-IR');
 
             return (
               <div key={item.id} className="bg-slate-800 border border-slate-700 rounded-3xl p-4 flex items-center gap-4 transition-all hover:border-slate-600">
-                <div className="w-24 h-24 bg-white rounded-2xl overflow-hidden flex-shrink-0">
+                <div
+                  onClick={() => onOpenProduct?.(item)}
+                  className={`w-24 h-24 bg-white rounded-2xl overflow-hidden flex-shrink-0 ${onOpenProduct ? 'cursor-pointer hover:ring-2 hover:ring-pharmacy-500/50 transition-all' : ''}`}
+                >
                   <img src={item.image} alt={item.name} className="w-full h-full object-contain p-2" />
                 </div>
                 
-                <div className="flex-grow">
-                  <h3 className="text-white font-bold mb-1 line-clamp-1 text-right text-base md:text-lg">{item.name}</h3>
-                  <p className="text-slate-500 text-xs mb-4 text-right">{item.category}</p>
+                <div className="flex-grow min-w-0">
+                  <div
+                    onClick={() => onOpenProduct?.(item)}
+                    className={onOpenProduct ? 'cursor-pointer mb-4' : 'mb-4'}
+                  >
+                    <h3 className="text-white font-bold mb-1 line-clamp-1 text-right text-base md:text-lg hover:text-pharmacy-400 transition-colors">{item.name}</h3>
+                    <p className="text-slate-500 text-xs text-right">{item.category}</p>
+                  </div>
                   
-                  <div className="flex items-end justify-between flex-row-reverse">
+                  <div className="flex items-end justify-between flex-row-reverse" onClick={e => e.stopPropagation()}>
                       <div className="flex flex-col items-end mr-4">
-                          <span className="text-xl md:text-2xl text-pharmacy-400 font-bold leading-none">{priceValue}</span>
-                          <span className="text-xs text-slate-500 mt-1">{priceCurrency}</span>
+                          <span className="text-xl md:text-2xl text-pharmacy-400 font-bold leading-none inline-flex items-center gap-1.5">
+                            {priceDisplay}
+                            <img src="/toman-logo.png" alt="تومان" className="h-3.5 w-auto object-contain opacity-90" />
+                          </span>
                       </div>
                       
                       <div className="flex items-center gap-3 bg-slate-900 rounded-xl p-1 border border-slate-700">
                           <button 
-                              onClick={() => onUpdateQuantity(item.id, -1)}
+                              onClick={(e) => { e.stopPropagation(); onUpdateQuantity(item.id, -1); }}
                               className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors"
                           >
                               <Minus className="w-4 h-4" />
                           </button>
                           <span className="text-white font-bold min-w-[20px] text-center">{item.quantity.toLocaleString('fa-IR')}</span>
                           <button 
-                              onClick={() => onUpdateQuantity(item.id, 1)}
+                              onClick={(e) => { e.stopPropagation(); onUpdateQuantity(item.id, 1); }}
                               className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors"
                           >
                               <Plus className="w-4 h-4" />
@@ -145,7 +155,7 @@ const Cart: React.FC<CartProps> = ({ items, onUpdateQuantity, onRemove, onChecko
                 </div>
 
                 <button 
-                  onClick={() => onRemove(item.id)}
+                  onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
                   className="p-2 text-slate-500 hover:text-red-500 transition-colors self-start mt-1"
                 >
                   <Trash2 className="w-5 h-5" />
@@ -167,7 +177,10 @@ const Cart: React.FC<CartProps> = ({ items, onUpdateQuantity, onRemove, onChecko
               </div>
               <div className="flex justify-between flex-row-reverse text-slate-400">
                 <span>جمع کل:</span>
-                <span>{subtotal.toLocaleString('fa-IR')} تومان</span>
+                <span className="inline-flex items-center gap-1">
+                  {subtotal.toLocaleString('fa-IR')}
+                  <img src="/toman-logo.png" alt="تومان" className="h-3 w-auto object-contain opacity-80" />
+                </span>
               </div>
               <div className="flex justify-between flex-row-reverse text-slate-400">
                 <span>هزینه ارسال:</span>
@@ -176,9 +189,12 @@ const Cart: React.FC<CartProps> = ({ items, onUpdateQuantity, onRemove, onChecko
             </div>
 
             <div className="border-t border-slate-700 pt-6 mb-8">
-              <div className="flex justify-between flex-row-reverse text-white font-bold text-xl">
-                <span>مبلغ قابل پرداخت:</span>
-                <span className="text-pharmacy-400">{subtotal.toLocaleString('fa-IR')} تومان</span>
+              <div className="flex justify-between flex-row-reverse items-start gap-4 text-white font-bold text-xl">
+                <span className="shrink-0">مبلغ قابل پرداخت:</span>
+                <span className="text-pharmacy-400 flex items-center gap-2 min-w-0">
+                  <span className="tabular-nums">{subtotal.toLocaleString('fa-IR')}</span>
+                  <img src="/toman-logo.png" alt="تومان" className="h-3.5 w-auto object-contain opacity-90 shrink-0" />
+                </span>
               </div>
             </div>
 
