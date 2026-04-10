@@ -1,11 +1,55 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client';
+import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
+import { onError } from '@apollo/client/link/error';
 import { ApolloProvider } from '@apollo/client/react';
 import App from './App';
 
+const httpLink = createHttpLink({
+  uri: 'https://drshamimnasab.ir/graphql',
+  fetch: async (uri, options) => {
+    const response = await fetch(uri, options);
+    const sessionHeader = response.headers.get('woocommerce-session');
+    if (sessionHeader) {
+      localStorage.setItem('woo_session', sessionHeader);
+    }
+    return response;
+  }
+});
+
+const authLink = setContext((_, { headers }) => {
+  const token = localStorage.getItem('pharmacy_token');
+  const wooSession = localStorage.getItem('woo_session');
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : '',
+      'woocommerce-session': wooSession ? `Session ${wooSession.replace('Session ', '')}` : ''
+    }
+  };
+});
+
+const errorLink = onError(({ graphQLErrors }) => {
+  if (graphQLErrors) {
+    for (const err of graphQLErrors) {
+      if (
+        err.message.includes('Expired token') ||
+        err.message.includes('invalid') ||
+        err.message.includes('not logged in')
+      ) {
+        localStorage.removeItem('pharmacy_token');
+        localStorage.removeItem('woo_session');
+        // Clear cached user so App does not restore session from localStorage after reload
+        localStorage.removeItem('pharmacy_user');
+        window.location.href = '/';
+      }
+    }
+  }
+});
+
 const client = new ApolloClient({
-  link: new HttpLink({ uri: 'https://drshamimnasab.ir/graphql' }),
+  link: errorLink.concat(authLink.concat(httpLink)),
   cache: new InMemoryCache()
 });
 

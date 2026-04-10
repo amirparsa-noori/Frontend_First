@@ -62,6 +62,8 @@ export interface BlogPost {
 
 export interface User {
   id: string;
+  /** WooCommerce customer databaseId - used for updateCustomer mutation */
+  databaseId?: number;
   firstName: string;
   lastName: string;
   nationalId: string;

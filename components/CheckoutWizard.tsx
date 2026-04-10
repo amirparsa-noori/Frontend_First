@@ -1,7 +1,32 @@
-
 import React, { useState } from 'react';
+import { useApolloClient } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import { User, Address, ShippingMethod, PaymentMethod, CartItem } from '../types';
 import { Check, Truck, Zap, MapPin, CreditCard, ChevronLeft, ChevronRight, Package, Wallet, Calendar } from 'lucide-react';
+
+const EMPTY_CART = gql`
+  mutation EmptyCart {
+    emptyCart(input: { clearPersistentCart: true }) {
+      cart { isEmpty }
+    }
+  }
+`;
+
+const ADD_TO_CART = gql`
+  mutation AddToCart($productId: Int!, $quantity: Int!) {
+    addToCart(input: { productId: $productId, quantity: $quantity }) {
+      cart { total }
+    }
+  }
+`;
+
+const CHECKOUT = gql`
+  mutation Checkout($input: CheckoutInput!) {
+    checkout(input: $input) {
+      order { databaseId status }
+    }
+  }
+`;
 
 interface CheckoutWizardProps {
   items: CartItem[];
@@ -16,7 +41,10 @@ const toPersianDigits = (num: string | number) => {
 };
 
 const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ items, user, onComplete, onCancel, onAddAddress }) => {
+  const client = useApolloClient();
   const [step, setStep] = useState(1);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
   const [selectedAddress, setSelectedAddress] = useState<string>(user.addresses[0]?.id || '');
   const [shipping, setShipping] = useState<ShippingMethod>(ShippingMethod.JET);
   const [payment, setPayment] = useState<PaymentMethod>(PaymentMethod.ZARINPAL);
@@ -257,34 +285,89 @@ const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ items, user, onComplete
         )}
 
         {/* Wizard Actions */}
-        <div className="flex items-center justify-between pt-6 border-t border-slate-700 mt-auto">
-          {step > 1 ? (
-            <button 
-              onClick={() => setStep(step - 1)}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-bold"
-            >
-              <ChevronRight className="w-5 h-5" />
-              مرحله قبل
-            </button>
-          ) : (
-            <button onClick={onCancel} className="text-slate-500 hover:text-red-500 transition-colors text-sm font-bold">لغو خرید</button>
+        <div className="flex flex-col gap-4 pt-6 border-t border-slate-700 mt-auto">
+          {checkoutError && (
+            <div className="bg-red-500/10 border border-red-500/50 rounded-2xl px-4 py-3 text-red-400 text-sm">
+              {checkoutError}
+            </div>
           )}
 
-          <button 
-            onClick={() => {
-              if (step < 3) setStep(step + 1);
-              else onComplete({ selectedAddress, shipping, payment, total });
-            }}
-            disabled={step === 1 && !selectedAddress}
-            className={`px-8 md:px-12 py-4 rounded-2xl font-bold transition-all shadow-lg flex items-center gap-2 text-base ${
-              step === 3 
-              ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20' 
-              : 'bg-pharmacy-500 hover:bg-pharmacy-400 text-white shadow-pharmacy-500/20'
-            } disabled:opacity-50 disabled:grayscale`}
-          >
-            {step === 3 ? 'پرداخت نهایی' : 'ادامه'}
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+          <div className="flex items-center justify-between">
+            {step > 1 ? (
+              <button 
+                onClick={() => setStep(step - 1)}
+                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-bold"
+              >
+                <ChevronRight className="w-5 h-5" />
+                مرحله قبل
+              </button>
+            ) : (
+              <button onClick={onCancel} className="text-slate-500 hover:text-red-500 transition-colors text-sm font-bold">لغو خرید</button>
+            )}
+
+            <button 
+              onClick={async () => {
+                if (step < 3) {
+                  setStep(step + 1);
+                  return;
+                }
+
+                setIsCheckingOut(true);
+                setCheckoutError('');
+
+                try {
+                  const addressObj = user.addresses.find(a => a.id === selectedAddress);
+
+                  try {
+                    await client.mutate({ mutation: EMPTY_CART });
+                  } catch (e) {}
+
+                  for (const item of items) {
+                    await client.mutate({
+                      mutation: ADD_TO_CART,
+                      variables: { productId: Number(item.id), quantity: item.quantity }
+                    });
+                  }
+
+                  // Map mock frontend gateways to active WooCommerce gateways for testing
+                  const wooPaymentMethod = payment === 'cod' ? 'cod' : 'bacs';
+
+                  await client.mutate({
+                    mutation: CHECKOUT,
+                    variables: {
+                      input: {
+                        paymentMethod: wooPaymentMethod,
+                        billing: {
+                          firstName: user.firstName,
+                          lastName: user.lastName,
+                          phone: user.phone,
+                          address1: addressObj?.fullAddress || 'آدرس ثبت نشده',
+                          city: addressObj?.city || '',
+                          postcode: addressObj?.postalCode || ''
+                        }
+                      }
+                    }
+                  });
+
+                  onComplete({ selectedAddress, shipping, payment, total });
+                } catch (err: any) {
+                  console.error('Checkout Error:', err);
+                  setCheckoutError(err?.message || 'خطا در ثبت سفارش');
+                } finally {
+                  setIsCheckingOut(false);
+                }
+              }}
+              disabled={(step === 1 && !selectedAddress) || isCheckingOut}
+              className={`px-8 md:px-12 py-4 rounded-2xl font-bold transition-all shadow-lg flex items-center gap-2 text-base ${
+                step === 3 
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20' 
+                : 'bg-pharmacy-500 hover:bg-pharmacy-400 text-white shadow-pharmacy-500/20'
+              } disabled:opacity-50 disabled:grayscale`}
+            >
+              {step === 3 && isCheckingOut ? 'در حال ثبت سفارش...' : (step === 3 ? 'پرداخت نهایی' : 'ادامه')}
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

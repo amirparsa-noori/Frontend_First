@@ -75,8 +75,10 @@ const Auth: React.FC<AuthProps> = ({ isOpen, onClose, onAuthSuccess, currentUser
         localStorage.setItem('pharmacy_token', data.login.authToken);
 
         const wpUser = data.login.user;
+        const dbId = wpUser?.databaseId;
         const mappedUser: User = {
-          id: String(wpUser?.databaseId ?? ''),
+          id: String(dbId ?? ''),
+          databaseId: dbId != null ? Number(dbId) : undefined,
           firstName: wpUser?.firstName || firstName || 'کاربر',
           lastName: wpUser?.lastName || lastName || 'گرامی',
           nationalId: nationalId || '',
@@ -122,8 +124,10 @@ const Auth: React.FC<AuthProps> = ({ isOpen, onClose, onAuthSuccess, currentUser
         localStorage.setItem('pharmacy_token', loginData.login.authToken);
 
         const wpUser = loginData.login.user;
+        const dbId = wpUser?.databaseId;
         const mappedUser: User = {
-          id: String(wpUser?.databaseId ?? ''),
+          id: String(dbId ?? ''),
+          databaseId: dbId != null ? Number(dbId) : undefined,
           firstName: wpUser?.firstName ?? firstName,
           lastName: wpUser?.lastName ?? lastName,
           nationalId: nationalId || '',

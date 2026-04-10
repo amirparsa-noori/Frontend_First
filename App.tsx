@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import Navbar from './components/Navbar';
@@ -11,6 +11,7 @@ import Auth from './components/Auth';
 import Profile from './components/Profile';
 import AddressForm from './components/AddressForm';
 import CheckoutWizard from './components/CheckoutWizard';
+import OrderSuccessScreen from './components/OrderSuccessScreen';
 import Consultation from './components/Consultation';
 import MobileNav from './components/MobileNav';
 import Magazine from './components/Magazine';
@@ -473,6 +474,11 @@ const App: React.FC = () => {
     const saved = localStorage.getItem('pharmacy_user');
     return saved ? JSON.parse(saved) : null;
   });
+
+  const [openProfileToOrdersTab, setOpenProfileToOrdersTab] = useState(false);
+  const handleProfileOrdersTabOpened = useCallback(() => {
+    setOpenProfileToOrdersTab(false);
+  }, []);
   
   const [reviews, setReviews] = useState<Review[]>(() => {
     const saved = localStorage.getItem('pharmacy_reviews');
@@ -1211,7 +1217,18 @@ const App: React.FC = () => {
               onOpenProduct={(p) => setSelectedProduct(p)}
               tickets={tickets.filter(t => t.userId === currentUser.id || t.id === 'T-SAMPLE-1')} // Allow sample ticket for demo
               onUpdateTicketMessage={handleUpdateTicketMessage}
+              openToOrdersTab={openProfileToOrdersTab}
+              onProfileOrdersTabOpened={handleProfileOrdersTabOpened}
             />
+        )}
+
+        {activeTab === 'order-success' && currentUser && (
+          <OrderSuccessScreen
+            onTrackOrder={() => {
+              setOpenProfileToOrdersTab(true);
+              setActiveTab('profile');
+            }}
+          />
         )}
 
         {activeTab === 'checkout' && currentUser && (
@@ -1233,9 +1250,8 @@ const App: React.FC = () => {
                 
                 setOrders(prev => [newOrder, ...prev]);
                 setCart([]);
-                setActiveTab('profile'); // Redirect to profile to see the new order
+                setActiveTab('order-success');
                 sendPushNotification('سفارش ثبت شد', 'سفارش شما با موفقیت ثبت گردید و در حال پردازش است.');
-                alert('سفارش شما با موفقیت ثبت شد!');
             }}
             onCancel={() => setActiveTab('cart')}
             onAddAddress={() => setIsAddressFormOpen(true)}
@@ -1245,7 +1261,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {activeTab !== 'consultation' && <Footer />}
+      {activeTab !== 'consultation' && activeTab !== 'order-success' && <Footer />}
       
       <MobileNav 
         activeTab={activeTab} 
